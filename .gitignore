@@ -1,0 +1,71 @@
+node_modules/
+dist/
+build/
+
+# Variáveis de ambiente (segredos: chaves de API, senha do banco, JWT secret,
+# credenciais SMTP) — NUNCA versionar. Só .env.example (sem valores reais) sobe.
+.env
+.env.*
+!.env.example
+
+*.log
+npm-debug.log*
+
+.DS_Store
+Thumbs.db
+
+coverage/
+backend/generated/
+
+# Arquivos enviados pelos usuários (PDFs de catálogos reais) e armazenamento
+# local de desenvolvimento — nunca deveriam ir pro repositório.
+backend/storage/
+
+# Editores/IDEs
+.vscode/
+.idea/
+
+# Chaves/certificados, por precaução
+*.pem
+*.key
+
+# Documentação de apoio de uso pessoal do autor (contexto de desenvolvimento,
+# histórico, prompts de agentes, material de TCC, auditorias) — não faz parte
+# do que o projeto precisa pra rodar, fica só localmente. Casos exatos como
+# estão no disco (confirmados via `git status`) + variantes de capitalização,
+# por precaução (alguns sistemas de arquivo/git tratam maiúsculas como
+# distintas). O README.md da raiz e o backend/src/agentesIA/README.md (esse é
+# documentação de código, não anotação pessoal) continuam indo pro repositório.
+/CONTEXTO.md
+/contexto.md
+/TESTES.md
+/TESTES.MD
+/testes.md
+/HISTORICO.md
+/historico.md
+/LEMBRETES.md
+/lembretes.md
+/AGENTS.md
+/Agents.md
+/agents.md
+/CLAUDE.md
+/claude.md
+/Partify_Contexto_Desenvolvimento.md
+/partify_contexto_desenvolvimento.md
+/AUDITORIA_TESTES.md
+/auditoria_testes.md
+/apresentacao-partify.md
+/doc1-arquitetura-persistencia.md
+/doc2-testes-avaliacao.md
+/CLICKUP_PROMPT.md
+/clickup_prompt.md
+/PLANO_CORRECAO_TESTES.md
+/plano_correcao_testes.md
+/prompts/
+
+# Config local do Claude Code (específica desta máquina/usuário)
+.claude/
+
+# Saída de ferramenta de análise de grafo de código (cache/relatório gerado,
+# não é código do projeto nem necessário pra rodar)
+/graphify-out/

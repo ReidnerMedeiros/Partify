@@ -1,0 +1,16 @@
+{
+  "name": "partify",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Partify - Sistema de extração e consulta de dados técnicos de ferramentas elétricas",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace backend",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "prisma:generate": "npm run prisma:generate --workspace backend",
+    "prisma:migrate": "npm run prisma:migrate --workspace backend"
+  }
+}

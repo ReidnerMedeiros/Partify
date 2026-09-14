@@ -1,0 +1,298 @@
+// Schema Prisma do Partify — modelo de dados derivado do DERS (seção 10.5.4 Dicionário de Dados)
+// Apenas as entidades Empresa, Usuario e LogAuditoria estão implementadas na aplicação (RF01).
+// As demais entidades (Marca, Ferramenta, VersaoTensao, Peca, Catalogo, Validacao) já estão
+// modeladas aqui como fundação para os próximos requisitos (RF06-RF12), evitando retrabalho de migração.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [vector]
+}
+
+// ---------------------------------------------------------------------------
+// Acesso e segurança (RF01, RF02, RF05, RF13)
+// ---------------------------------------------------------------------------
+
+enum StatusEmpresa {
+  ATIVA
+  INATIVA
+}
+
+model Empresa {
+  id       String        @id @default(uuid())
+  nome     String
+  cnpjCpf  String        @unique
+  telefone String
+  email    String
+  status   StatusEmpresa @default(ATIVA)
+  criadoEm DateTime      @default(now())
+
+  usuarios Usuario[]
+
+  // Domínio técnico (RF06-RF12) — isolado por instância (RNF11): cada empresa
+  // tem sua própria cópia de Marca/Ferramenta/VersaoTensao/Catalogo/Peca/Validacao,
+  // mesmo que duas empresas importem o catálogo do mesmo fabricante/modelo.
+  marcas        Marca[]
+  ferramentas   Ferramenta[]
+  versoesTensao VersaoTensao[]
+  catalogos     Catalogo[]
+  pecas         Peca[]
+  validacoes    Validacao[]
+  logsAuditoria LogAuditoria[]
+
+  @@map("empresas")
+}
+
+enum Perfil {
+  ADMINISTRADOR
+  TECNICO
+  VENDEDOR
+}
+
+model Usuario {
+  id        String   @id @default(uuid())
+  nome      String
+  email     String
+  // A tela de login (RF02, Quadro 16) só pede "login" e "senha", sem seletor de empresa/instância.
+  // Por isso o login é único globalmente (e não por empresa): é ele quem identifica o usuário e,
+  // transitivamente, a instância (empresaId) a que ele pertence.
+  login     String   @unique
+  senhaHash String
+  perfil    Perfil
+  ativo     Boolean  @default(true)
+  empresaId String
+  criadoEm  DateTime @default(now())
+
+  empresa                 Empresa                   @relation(fields: [empresaId], references: [id])
+  logsAuditoria           LogAuditoria[]
+  validacoes              Validacao[]
+  sessoesRevogadas        SessaoRevogada[]
+  tokensRedefinicaoSenha  TokenRedefinicaoSenha[]
+
+  @@map("usuarios")
+}
+
+// RF02 (fluxo alternativo A1 — Logout) e RNF07. Como o token de sessão é um JWT
+// (stateless por natureza), a única forma de "invalidar imediatamente" um token
+// já emitido é mantendo uma lista de negação (denylist) dos identificadores de
+// sessão (jti) revogados — é o que esta tabela representa. authMiddleware
+// consulta esta tabela a cada requisição autenticada.
+model SessaoRevogada {
+  id         String   @id @default(uuid())
+  jti        String   @unique
+  usuarioId  String
+  expiraEm   DateTime
+  revogadoEm DateTime @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+
+  @@index([expiraEm])
+  @@map("sessoes_revogadas")
+}
+
+// RF03 — Recuperar Senha. Guarda apenas o hash SHA-256 do token enviado por
+// e-mail (nunca o token em texto puro), de uso único e com expiração curta.
+model TokenRedefinicaoSenha {
+  id        String    @id @default(uuid())
+  usuarioId String
+  tokenHash String    @unique
+  expiraEm  DateTime
+  usadoEm   DateTime?
+  criadoEm  DateTime  @default(now())
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+
+  @@map("tokens_redefinicao_senha")
+}
+
+enum TipoAcao {
+  LOGIN
+  LOGOUT
+  UPLOAD_VISTA_EXPLODIDA
+  EXTRACAO_IA
+  VALIDACAO_HITL
+  CRIACAO_USUARIO
+  EDICAO_USUARIO
+  ATIVAR_DESATIVAR_USUARIO
+  ALTERACAO_SENHA
+  EDICAO_REGISTRO
+  EXCLUSAO_REGISTRO
+  CRIACAO_EMPRESA
+  ATIVAR_DESATIVAR_EMPRESA
+  ACESSO_NAO_AUTORIZADO
+  ARQUIVAMENTO_DOCUMENTO
+}
+
+// Tabela imutável (RNF09) — nenhuma operação de UPDATE/DELETE deve ser exposta pela aplicação.
+// A imutabilidade definitiva é reforçada por uma migration com triggers a nível de banco (ver
+// prisma/migrations, criada após a migration inicial).
+//
+// empresaId (decisão #27, ver CONTEXTO.md): coluna direta, mesmo padrão de Marca/Ferramenta/
+// VersaoTensao/Catalogo/Peca/Validacao (RNF11) — o RF13 precisa filtrar "log da instância" sem
+// depender de um JOIN via usuario.empresaId, que quebraria para os registros com usuarioId nulo
+// (ex.: CRIACAO_EMPRESA, logado antes de existir qualquer sessão). Fica nullable apenas para os
+// raríssimos casos em que a empresa genuinamente não é identificável no momento do log (ex.:
+// ACESSO_NAO_AUTORIZADO com token ausente/ilegível, sem como decodificar nenhum dado) — mesmo
+// tratamento já aceito para usuarioId.
+model LogAuditoria {
+  id              String   @id @default(uuid())
+  usuarioId       String?
+  empresaId       String?
+  tipoAcao        TipoAcao
+  registroAfetado String?
+  detalhes         Json?
+  realizadoEm     DateTime @default(now())
+
+  usuario Usuario? @relation(fields: [usuarioId], references: [id])
+  empresa Empresa? @relation(fields: [empresaId], references: [id])
+
+  @@index([empresaId])
+  @@map("logs_auditoria")
+}
+
+// ---------------------------------------------------------------------------
+// Domínio técnico (RF06-RF12) — RNF11 exige isolamento total por instância:
+// "os dados técnicos cadastrados, incluindo catálogos, peças, ferramentas e
+// histórico de validações, [devem ser] completamente segregados dos dados de
+// qualquer outra instância". Por isso toda entidade abaixo carrega empresaId
+// diretamente (mesmo padrão do Usuario), em vez de ser uma base compartilhada
+// entre empresas — decisão revertida durante a revisão de RN/RNF que antecedeu
+// o RF09 (ver CONTEXTO.md, decisão #12, e HISTORICO.md).
+// ---------------------------------------------------------------------------
+
+enum EnumTensao {
+  V127
+  V220
+  BIVOLT
+  NAO_INFORMADO
+}
+
+enum StatusCatalogo {
+  PENDENTE_EXTRACAO
+  PENDENTE_VALIDACAO
+  VALIDADO
+  IRRESOLUVEL
+}
+
+model Marca {
+  id        String @id @default(uuid())
+  nome      String
+  empresaId String
+
+  empresa     Empresa      @relation(fields: [empresaId], references: [id])
+  ferramentas Ferramenta[]
+
+  // Nome só precisa ser único dentro da própria empresa — duas instâncias
+  // diferentes podem (e devem) ter cada uma o seu próprio registro "Bosch".
+  @@unique([empresaId, nome])
+  @@map("marcas")
+}
+
+model Ferramenta {
+  id        String @id @default(uuid())
+  modelo    String
+  marcaId   String
+  empresaId String
+
+  marca         Marca          @relation(fields: [marcaId], references: [id])
+  empresa       Empresa        @relation(fields: [empresaId], references: [id])
+  versoesTensao VersaoTensao[]
+
+  @@unique([marcaId, modelo])
+  @@index([empresaId])
+  @@map("ferramentas")
+}
+
+model VersaoTensao {
+  id           String     @id @default(uuid())
+  tensao       EnumTensao
+  ferramentaId String
+  empresaId    String
+
+  ferramenta Ferramenta @relation(fields: [ferramentaId], references: [id])
+  empresa    Empresa    @relation(fields: [empresaId], references: [id])
+  pecas      Peca[]
+
+  @@index([empresaId])
+  @@map("versoes_tensao")
+}
+
+model Catalogo {
+  id              String         @id @default(uuid())
+  empresaId       String
+  nomeArquivo     String
+  caminhoArquivo  String
+  status          StatusCatalogo @default(PENDENTE_EXTRACAO)
+  motivoPendencia String?
+  camposAusentes  Json?
+  // RF07 — índice de confiança calculado pela IA para os campos de nível de documento
+  // (marca/modelo/tensão), no formato { "marca": 95, "modelo": 70, "tensao": 98 }. As
+  // peças individuais têm seu próprio índice em Peca.confianca (podem repetir o mesmo
+  // Ferramenta/VersaoTensao entre catálogos diferentes da mesma empresa, então a
+  // confiança fica aqui, por extração, e não no registro de Ferramenta/VersaoTensao).
+  confiancaCampos Json?
+  // Agregado (ex.: média) exibido como "XX% confiança geral" na tela de validação (RF08).
+  confiancaGeral  Float?
+  criadoEm        DateTime       @default(now())
+  atualizadoEm    DateTime       @updatedAt
+
+  empresa    Empresa     @relation(fields: [empresaId], references: [id])
+  pecas      Peca[]
+  validacoes Validacao[]
+
+  @@index([empresaId])
+  @@map("catalogos")
+}
+
+model Peca {
+  id             String   @id @default(uuid())
+  empresaId      String
+  codigo         String
+  descricao      String?
+  posicaoVisual  String?
+  // RF07 — índice de confiança (0-100) calculado pela IA para esta peça especificamente,
+  // exibido como barra colorida na tela de validação (RF08) quando abaixo de 75%.
+  confianca      Float?
+  versaoTensaoId String
+  catalogoId     String
+  criadoEm       DateTime @default(now())
+  atualizadoEm   DateTime @updatedAt
+
+  // Vetor de 768 dimensões (gemini-embedding-001, com outputDimensionality: 768) para busca
+  // semântica via pgvector (RF12, ainda não implementado). Tipo "Unsupported" pois o Prisma
+  // Client ainda não modela pgvector nativamente — leitura e escrita deste campo são feitas
+  // via $queryRaw/$executeRaw pelo AgenteExtrator/AgenteConsulta. empresaId fica duplicado
+  // aqui (além de acessível via catalogo/versaoTensao) para que a futura busca vetorial do
+  // RF12 filtre por instância direto no WHERE do SQL bruto, sem depender de um JOIN correto
+  // — RNF11 exige que o isolamento valha "em nenhum cenário de teste".
+  embedding Unsupported("vector(768)")?
+
+  empresa      Empresa      @relation(fields: [empresaId], references: [id])
+  versaoTensao VersaoTensao @relation(fields: [versaoTensaoId], references: [id])
+  catalogo     Catalogo     @relation(fields: [catalogoId], references: [id])
+
+  @@index([empresaId])
+  @@map("pecas")
+}
+
+model Validacao {
+  id          String   @id @default(uuid())
+  empresaId   String
+  catalogoId  String
+  usuarioId   String
+  validadoEm  DateTime @default(now())
+  observacoes String?
+
+  empresa  Empresa  @relation(fields: [empresaId], references: [id])
+  catalogo Catalogo @relation(fields: [catalogoId], references: [id])
+  usuario  Usuario  @relation(fields: [usuarioId], references: [id])
+
+  @@index([empresaId])
+  @@map("validacoes")
+}

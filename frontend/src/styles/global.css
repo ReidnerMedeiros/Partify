@@ -1,0 +1,1177 @@
+:root {
+  --partify-blue: #1d4ed8;
+  --partify-blue-dark: #1e3a8a;
+  --partify-blue-light: #eef2ff;
+  --partify-bg-page: #eef2fb;
+  --partify-text: #1f2937;
+  --partify-text-muted: #6b7280;
+  --partify-border: #d7deea;
+  --partify-danger: #dc2626;
+  --partify-danger-bg: #fef2f2;
+  --partify-success-bg: #ecfdf5;
+  --partify-success-text: #047857;
+  --radius: 12px;
+  --shadow-card: 0 10px 30px rgba(17, 24, 39, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Roboto, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--partify-text);
+  background: var(--partify-bg-page);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+a {
+  color: var(--partify-blue);
+}
+
+/* --- Layout de tela pública (login/cadastro) — fundo azul cheio, card branco centralizado --- */
+.auth-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--partify-blue);
+  padding: 24px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 32px 32px 28px;
+}
+
+.auth-card__logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--partify-blue);
+  margin-bottom: 16px;
+}
+
+.auth-card__divider {
+  border: none;
+  border-top: 1px solid var(--partify-border);
+  margin: 0 0 20px;
+}
+
+.auth-card h1 {
+  font-size: 1.3rem;
+  margin: 0 0 6px;
+}
+
+.auth-card__subtitle {
+  color: var(--partify-text-muted);
+  font-size: 0.85rem;
+  margin: 0 0 22px;
+  line-height: 1.4;
+}
+
+.auth-card__footer {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 0.85rem;
+  color: var(--partify-text-muted);
+}
+
+/* --- Barra superior das telas autenticadas --- */
+.topbar {
+  background: var(--partify-blue);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+}
+
+.topbar__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar__back {
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.topbar__logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.topbar__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.topbar__icon-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbar__menu-wrapper {
+  position: relative;
+}
+
+.topbar__dropdown {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+  min-width: 120px;
+  overflow: hidden;
+  z-index: 20;
+}
+
+.topbar__dropdown-item {
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  color: var(--partify-text);
+  font-size: 0.88rem;
+}
+
+.topbar__dropdown-item:hover {
+  background: var(--partify-blue-light);
+}
+
+/* --- Modal de confirmação (RNF03) --- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 50;
+}
+
+.modal-box {
+  width: 100%;
+  max-width: 380px;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+}
+
+.modal-box h3 {
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+}
+
+.modal-box p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--partify-text-muted);
+  line-height: 1.4;
+}
+
+.modal-box .form-actions {
+  margin-top: 20px;
+}
+
+/* --- Menu principal --- */
+.menu-card {
+  width: 100%;
+  max-width: 460px;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  height: fit-content;
+}
+
+.menu-card__header {
+  background: var(--partify-blue);
+  color: #fff;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.15rem;
+  padding: 18px 20px;
+}
+
+.menu-card__body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.menu-card__divider {
+  border: none;
+  border-top: 1px solid var(--partify-border);
+  margin: 4px 0;
+}
+
+.menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  text-align: left;
+}
+
+.menu-btn__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.menu-btn__icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.menu-btn--primary {
+  background: var(--partify-blue);
+  color: #fff;
+}
+
+.menu-btn--primary:hover:not(:disabled) {
+  background: var(--partify-blue-dark);
+}
+
+.menu-btn--primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.menu-btn--danger-outline {
+  background: #fff;
+  color: var(--partify-danger);
+  border-color: #fecaca;
+  justify-content: center;
+}
+
+.menu-btn--danger-outline:hover:not(:disabled) {
+  background: var(--partify-danger-bg);
+}
+
+/* --- Conteúdo autenticado --- */
+.page-content {
+  min-height: calc(100vh - 56px);
+  display: flex;
+  justify-content: center;
+  padding: 48px 24px;
+}
+
+.content-card {
+  width: 100%;
+  max-width: 460px;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 28px 28px 24px;
+  height: fit-content;
+}
+
+.content-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.content-card h2 {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+}
+
+.content-card__subtitle {
+  color: var(--partify-text-muted);
+  font-size: 0.82rem;
+  margin: 0 0 20px;
+}
+
+/* --- Formulários --- */
+.field {
+  margin-bottom: 16px;
+}
+
+.field label {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--partify-text-muted);
+  margin-bottom: 6px;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--partify-border);
+  font-size: 0.92rem;
+  color: var(--partify-text);
+  background: #fff;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--partify-blue);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+}
+
+.field input.field--invalid {
+  border-color: var(--partify-danger);
+}
+
+.field__error {
+  color: var(--partify-danger);
+  font-size: 0.76rem;
+  margin-top: 5px;
+}
+
+.content-card--wide {
+  max-width: 900px;
+}
+
+/* --- RF05: Manter Usuário (tela de listagem em tabela) --- */
+.page-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.table-card {
+  border: 1px solid var(--partify-border);
+  border-radius: var(--radius);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-card__estado {
+  margin: 0;
+  padding: 24px;
+  text-align: center;
+  color: var(--partify-text-muted);
+  font-size: 0.88rem;
+}
+
+.data-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--partify-border);
+}
+
+.data-table th {
+  background: var(--partify-blue-light);
+  color: var(--partify-text-muted);
+  font-weight: 600;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.data-table tbody tr:last-of-type td {
+  border-bottom: none;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.badge--perfil-administrador {
+  background: var(--partify-blue-light);
+  color: var(--partify-blue-dark);
+}
+
+.badge--perfil-tecnico {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge--perfil-vendedor {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.badge--ativo {
+  background: var(--partify-success-bg);
+  color: var(--partify-success-text);
+}
+
+.badge--inativo {
+  background: var(--partify-danger-bg);
+  color: var(--partify-danger);
+}
+
+.table-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid var(--partify-border);
+  background: #fff;
+  color: var(--partify-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.icon-btn:hover {
+  background: var(--partify-blue-light);
+}
+
+.icon-btn--danger {
+  color: var(--partify-danger);
+  border-color: #fecaca;
+}
+
+.icon-btn--danger:hover {
+  background: var(--partify-danger-bg);
+}
+
+.icon-btn--success {
+  color: var(--partify-success-text);
+  border-color: #a7f3d0;
+}
+
+.icon-btn--success:hover {
+  background: var(--partify-success-bg);
+}
+
+/* --- Modal de formulário (mais largo que o de confirmação) --- */
+.modal-box--form {
+  max-width: 420px;
+}
+
+/* --- RF06: Importar Catálogo (dropzone de upload) --- */
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+
+.form-row .field {
+  flex: 1;
+  min-width: 0;
+}
+
+/* RF09 — código da peça em destaque na listagem (fiel ao protótipo), sem
+   navegação própria — o clique de fato é nos ícones de ação da linha. */
+.table-link {
+  color: var(--partify-blue);
+  font-weight: 600;
+}
+
+/* RF09 — barra de filtros da tela "Manter Catálogo" (marca/modelo/código + botão). */
+.filtros-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.filtros-row .field {
+  flex: 1;
+}
+
+.filtros-row .btn {
+  flex-shrink: 0;
+}
+
+/* RNF04 — indicador de progresso dinâmico para operações >2s (RF06/RF07: envio
+   do PDF + extração via IA). Um spinner de verdade, não só texto no botão. */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spinner-girar 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+@keyframes spinner-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.upload-dropzone {
+  border: 2px dashed var(--partify-border);
+  border-radius: var(--radius);
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.upload-dropzone:hover,
+.upload-dropzone--ativa {
+  border-color: var(--partify-blue);
+  background: var(--partify-blue-light);
+}
+
+.upload-dropzone--invalida {
+  border-color: var(--partify-danger);
+}
+
+.upload-dropzone__icone {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  color: var(--partify-blue);
+  margin-bottom: 10px;
+}
+
+.upload-dropzone__icone svg {
+  width: 100%;
+  height: 100%;
+}
+
+.upload-dropzone__titulo {
+  margin: 0 0 4px;
+  font-weight: 600;
+  color: var(--partify-text);
+}
+
+.upload-dropzone__subtitulo {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--partify-text-muted);
+}
+
+.alert--aviso {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.alert__acao {
+  display: block;
+  margin-top: 8px;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* --- RF08: Interface de Validação (HITL, tela dividida) --- */
+.page-content--split {
+  align-items: flex-start;
+  gap: 20px;
+  padding: 24px;
+}
+
+.split-panel {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 20px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Painel do documento original ganha mais espaço horizontal que o formulário,
+   já que a legibilidade do PDF (vista explodida) é o que mais importa pro
+   validador humano conferir os dados extraídos lado a lado. */
+.split-panel--documento {
+  flex: 1.4;
+}
+
+.split-panel--dados {
+  flex: 1;
+}
+
+.split-panel h3 {
+  margin: 0 0 14px;
+  font-size: 1rem;
+}
+
+.split-panel__cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.split-panel__cabecalho h3 {
+  margin: 0;
+}
+
+.split-panel__subtitulo {
+  margin: 20px 0 10px;
+  font-size: 0.9rem;
+}
+
+.badge--confianca {
+  background: var(--partify-blue-light);
+  color: var(--partify-blue-dark);
+}
+
+.pdf-preview {
+  background: #f3f4f6;
+  border-radius: 8px;
+  min-height: 480px;
+  height: calc(100vh - 220px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pdf-preview__frame {
+  width: 100%;
+  height: 100%;
+  min-height: 480px;
+  border: none;
+  border-radius: 8px;
+}
+
+.pdf-preview__vazio {
+  color: var(--partify-text-muted);
+  font-size: 0.85rem;
+}
+
+.confidence-bar {
+  height: 4px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  margin: -10px 0 16px;
+  overflow: hidden;
+}
+
+.confidence-bar__fill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.confidence-bar__fill--alta {
+  background: var(--partify-success-text);
+}
+
+.confidence-bar__fill--media {
+  background: #d97706;
+}
+
+.confidence-bar__fill--baixa {
+  background: var(--partify-danger);
+}
+
+.peca-row {
+  border: 1px solid var(--partify-border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.peca-row__campos {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.peca-row__campos .field {
+  flex: 2;
+  margin-bottom: 0;
+}
+
+.peca-row__campos .field--posicao {
+  flex: 1;
+}
+
+.peca-row .confidence-bar {
+  margin: 8px 0 0;
+}
+
+@media (max-width: 900px) {
+  .page-content--split {
+    flex-direction: column;
+  }
+
+  .pdf-preview {
+    height: 480px;
+  }
+}
+
+/* --- Visualização de dados (read-only) --- */
+.data-row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--partify-border);
+}
+
+.data-row:last-of-type {
+  border-bottom: none;
+}
+
+.data-row__label {
+  font-size: 0.76rem;
+  color: var(--partify-text-muted);
+  margin-bottom: 3px;
+}
+
+.data-row__value {
+  font-size: 0.95rem;
+  color: var(--partify-text);
+}
+
+/* --- Botões --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  transition: opacity 0.15s ease;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  background: var(--partify-blue);
+  color: #fff;
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--partify-blue-dark);
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn--outline {
+  background: #fff;
+  color: var(--partify-text);
+  border-color: var(--partify-border);
+}
+
+.btn--danger-outline {
+  background: var(--partify-danger-bg);
+  color: var(--partify-danger);
+  border-color: #fecaca;
+  width: 100%;
+}
+
+.btn--sm {
+  padding: 6px 14px;
+  font-size: 0.82rem;
+}
+
+.btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* RF10 — variantes outline coloridas para as ações da fila de pendentes
+   (diferente de .btn--danger-outline, que é full-width e usada em telas de
+   confirmação/rodapé, não em botões lado a lado num card). */
+.btn--outline-danger {
+  background: #fff;
+  color: var(--partify-danger);
+  border-color: #fecaca;
+}
+
+.btn--outline-danger:hover:not(:disabled) {
+  background: var(--partify-danger-bg);
+}
+
+.btn--outline-info {
+  background: #fff;
+  color: var(--partify-blue-dark);
+  border-color: #bfdbfe;
+}
+
+.btn--outline-info:hover:not(:disabled) {
+  background: var(--partify-blue-light);
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.form-actions .btn {
+  flex: 1;
+}
+
+/* --- Mensagens de estado --- */
+.alert {
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+}
+
+.alert--error {
+  background: var(--partify-danger-bg);
+  color: var(--partify-danger);
+}
+
+.alert--success {
+  background: var(--partify-success-bg);
+  color: var(--partify-success-text);
+}
+
+.page-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: var(--partify-text-muted);
+}
+
+/* --- RF10: Documentos Pendentes (fila em cards) --- */
+.pendentes-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.pendente-card {
+  border: 1px solid var(--partify-border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  background: #fff;
+}
+
+.pendente-card__topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pendente-card__arquivo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+
+.pendente-card__arquivo svg {
+  width: 16px;
+  height: 16px;
+  color: var(--partify-text-muted);
+  flex-shrink: 0;
+}
+
+.pendente-card__badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pendente-card__info {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: var(--partify-text-muted);
+}
+
+.pendente-card__campos-ausentes {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.pendente-card__campos-ausentes-rotulo {
+  font-size: 0.78rem;
+  color: var(--partify-text-muted);
+  margin-right: 2px;
+}
+
+.pendente-card__acoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.badge--situacao-pendente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge--situacao-irresoluvel {
+  background: var(--partify-danger-bg);
+  color: var(--partify-danger);
+}
+
+.badge--campo-ausente {
+  background: var(--partify-danger-bg);
+  color: var(--partify-danger);
+  font-weight: 500;
+}
+
+/* --- RF11: Consultar Componentes --- */
+.consulta-layout {
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.consulta-acoes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.consulta-modo {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  color: var(--partify-text-muted);
+  text-align: center;
+}
+
+.empty-state__icone {
+  width: 40px;
+  height: 40px;
+  color: var(--partify-border);
+  margin-bottom: 12px;
+}
+
+.empty-state__icone svg {
+  width: 100%;
+  height: 100%;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* --- Confirmação de duas etapas (RNF03) --- */
+.confirm-box {
+  border: 1px solid #fecaca;
+  background: var(--partify-danger-bg);
+  border-radius: 8px;
+  padding: 14px;
+  margin-top: 12px;
+}
+
+.confirm-box p {
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+  color: #7f1d1d;
+}
+
+.confirm-box .form-actions {
+  margin-top: 0;
+}
+
+/* --- RF12: Consulta Técnica (IA) — chat do Agente de Consulta --- */
+.consulta-tecnica-card {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 152px);
+}
+
+.chat-transcricao {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 2px 12px;
+}
+
+.chat-bolha {
+  max-width: 78%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.chat-bolha p {
+  margin: 0;
+}
+
+.chat-bolha--usuario {
+  align-self: flex-end;
+  background: var(--partify-blue);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-bolha--ia {
+  align-self: flex-start;
+  background: #fff;
+  border: 1px solid var(--partify-border);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-bolha__erro {
+  color: var(--partify-danger);
+}
+
+.fonte-citada {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--partify-blue-light);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 10px 0;
+}
+
+.fonte-citada__texto {
+  font-size: 0.78rem;
+  color: var(--partify-text-muted);
+}
+
+.chat-form {
+  display: flex;
+  gap: 10px;
+  border-top: 1px solid var(--partify-border);
+  padding-top: 16px;
+  margin-top: 4px;
+}
+
+.chat-form input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--partify-border);
+  font-size: 0.92rem;
+  color: var(--partify-text);
+}
+
+.chat-form input:focus {
+  outline: none;
+  border-color: var(--partify-blue);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.15);
+}
+
+.btn--icon {
+  padding: 10px 14px;
+}
+
+.btn--icon .spinner {
+  margin-right: 0;
+}
+
+/* --- Responsividade mobile (RNF02 — funcional a partir de 360px) --- */
+@media (max-width: 640px) {
+  .page-content {
+    padding: 24px 16px;
+  }
+
+  .page-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .form-row,
+  .filtros-row,
+  .peca-row__campos {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filtros-row .btn {
+    width: 100%;
+  }
+
+  .icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+}
