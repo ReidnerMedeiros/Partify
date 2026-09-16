@@ -87,7 +87,7 @@ cp frontend/.env.example frontend/.env
 
 Edite `backend/.env` com a `DATABASE_URL`/`DIRECT_URL` do seu projeto Supabase e um `JWT_SECRET` forte.
 
-Para o RF03 (envio do e-mail de redefinição de senha), configure as variáveis `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS` e `SMTP_FROM`. Se `SMTP_HOST` ficar em branco, o backend usa um `ConsoleEmailService` de desenvolvimento, que apenas imprime o link de redefinição no console do servidor — útil para testar o fluxo localmente sem um provedor de e-mail real.
+Para o RF03 (envio do e-mail de redefinição de senha), configure `BREVO_API_KEY`, `BREVO_SENDER_EMAIL` e `BREVO_SENDER_NAME` (recomendado — API HTTP do Brevo, não afetada pelo bloqueio de portas SMTP que plataformas como o Render aplicam em planos gratuitos; gere a chave em https://app.brevo.com/settings/keys/api e verifique o remetente em https://app.brevo.com/senders/list) ou, alternativamente, `SMTP_HOST`/`SMTP_PORT`/`SMTP_SECURE`/`SMTP_USER`/`SMTP_PASS`/`SMTP_FROM` (SMTP tradicional). Se nenhuma das duas estiver configurada, o backend usa um `ConsoleEmailService` de desenvolvimento, que apenas imprime o link de redefinição no console do servidor.
 
 Para o RF07/RF08 (Agente Extrator e embeddings) e o RF12 (Agente de Consulta — RAG), configure `GEMINI_API_KEY` (gere em https://aistudio.google.com/apikey — **nunca compartilhe essa chave**) e confira se `GEMINI_MODEL`/`GEMINI_EMBEDDING_MODEL` apontam para identificadores de modelo válidos no momento (nomes de modelo da Gemini API mudam com frequência — confirme em https://ai.google.dev/gemini-api/docs/models). Sem `GEMINI_API_KEY`, as rotas `/catalogos*` e `/consulta-tecnica` retornam erro ao chamar a IA.
 
@@ -216,7 +216,7 @@ Se algum dos dois falhar, o commit/PR aparece marcado com ❌ no GitHub — é o
 1. Crie um **Web Service** apontando para este repositório, com **Root Directory** `backend`.
 2. Build Command: `npm install && npm run build` (o script `build` roda `prisma generate` e `prisma migrate deploy` contra o banco de produção).
 3. Start Command: `npm start`.
-4. Cadastre as variáveis de ambiente no painel do Render (não use o `.env` local — ele fica fora do repositório): `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_EMBEDDING_MODEL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET`, `FRONTEND_URL` (URL do frontend no Vercel, usada pelo CORS e pelo link de redefinição de senha) e, se quiser envio real de e-mail, as `SMTP_*`.
+4. Cadastre as variáveis de ambiente no painel do Render (não use o `.env` local — ele fica fora do repositório): `DATABASE_URL`, `DIRECT_URL` (ver observação abaixo sobre IPv6), `JWT_SECRET`, `JWT_EXPIRES_IN`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_EMBEDDING_MODEL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET`, `FRONTEND_URL` (URL do frontend no Vercel, usada pelo CORS e pelo link de redefinição de senha) e `BREVO_API_KEY`/`BREVO_SENDER_EMAIL`/`BREVO_SENDER_NAME` (envio real do e-mail de redefinição — **não use `SMTP_*` no Render**, planos gratuitos bloqueiam portas SMTP de saída, ver observação abaixo).
 5. Rode manualmente uma vez, direto no SQL Editor do Supabase (ou via `psql`), o script `backend/prisma/manual/immutable_audit_log.sql` — ele não é aplicado pelas migrations do Prisma.
 
 ### Frontend no Vercel
@@ -225,6 +225,14 @@ Se algum dos dois falhar, o commit/PR aparece marcado com ❌ no GitHub — é o
 2. Framework preset: Vite (build command `npm run build`, output `dist`).
 3. Cadastre a env var `VITE_API_URL` apontando para a URL pública do backend no Render.
 4. Depois do primeiro deploy do frontend, volte no Render e atualize `FRONTEND_URL` com a URL definitiva do Vercel.
+
+### Problema conhecido: `DIRECT_URL` e IPv6 (Render/Vercel)
+
+O endereço de conexão direta do Supabase (`db.<referencia>.supabase.co:5432`) só resolve por **IPv6**. Plataformas como Render e Vercel não têm saída IPv6 por padrão, então `prisma migrate deploy` falha com `P1001: Can't reach database server` mesmo com a URL/senha corretas. Solução: use o mesmo endereço do **Session pooler** (o mesmo valor de `DATABASE_URL`, formato `aws-0-<regiao>.pooler.supabase.com:5432`, IPv4-compatível) também em `DIRECT_URL` nas variáveis de ambiente de produção — localmente isso não costuma dar problema porque muitos provedores de internet residenciais já suportam IPv6.
+
+### Problema conhecido: portas SMTP bloqueadas em planos gratuitos (Render)
+
+Planos gratuitos do Render (e de outras plataformas de deploy) bloqueiam conexões de saída para as portas SMTP tradicionais (25/465/587), então qualquer envio via `SmtpEmailService` (Gmail, Outlook etc.) falha com `ETIMEDOUT` em produção — não é erro de credencial. A solução usada neste projeto foi implementar `BrevoEmailService`, que envia e-mails via API HTTP (porta 443) em vez de SMTP, contornando esse bloqueio. Use sempre `BREVO_API_KEY` em produção; `SMTP_*` continua funcionando normalmente em ambiente local (a maioria das redes residenciais não bloqueia essas portas).
 
 ### Observação de segurança
 

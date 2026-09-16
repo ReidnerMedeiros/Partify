@@ -18,6 +18,7 @@ const { JwtTokenService } = require("../../infra/security/JwtTokenService");
 const { NodeRandomTokenService } = require("../../infra/security/NodeRandomTokenService");
 const { ConsoleEmailService } = require("../../infra/email/ConsoleEmailService");
 const { SmtpEmailService } = require("../../infra/email/SmtpEmailService");
+const { BrevoEmailService } = require("../../infra/email/BrevoEmailService");
 const { LocalFileStorageService } = require("../../infra/storage/LocalFileStorageService");
 const { SupabaseStorageService } = require("../../infra/storage/SupabaseStorageService");
 // Agentes de IA ficam isolados em src/agentesIA/, separados da infra genérica.
@@ -84,9 +85,18 @@ const tokenService = new JwtTokenService({
 });
 const randomTokenService = new NodeRandomTokenService();
 
-// Em produção (SMTP_HOST configurado) envia e-mails de verdade; em dev, apenas
-// registra o link de redefinição no console do servidor.
-const emailService = process.env.SMTP_HOST
+// Ordem de prioridade: BREVO_API_KEY (produção recomendada — API HTTP, não é
+// afetada pelo bloqueio de portas SMTP que plataformas como o Render aplicam em
+// planos gratuitos) > SMTP_HOST (SMTP tradicional, só funciona em plataformas/
+// planos que permitem saída SMTP) > ConsoleEmailService (dev: apenas registra o
+// link de redefinição no console do servidor).
+const emailService = process.env.BREVO_API_KEY
+  ? new BrevoEmailService({
+      apiKey: process.env.BREVO_API_KEY,
+      remetenteEmail: process.env.BREVO_SENDER_EMAIL,
+      remetenteNome: process.env.BREVO_SENDER_NAME,
+    })
+  : process.env.SMTP_HOST
   ? new SmtpEmailService({
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT,
