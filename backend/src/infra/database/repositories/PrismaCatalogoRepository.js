@@ -35,6 +35,40 @@ function paraEntidadePeca(registro) {
   });
 }
 
+const P2028_TENTATIVAS = 3;
+const P2028_ESPERA_MS = 300;
+
+function aguardar(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Executa uma transação interativa do Prisma com retentativa automática para o
+ * caso de a conexão que segurava a transação cair no meio do caminho (P2028
+ * "Transaction not found... refers to an old closed transaction" — diferente
+ * do P2028 de timeout, que já tem seu próprio tratamento via `{ timeout }`).
+ * Contra um banco remoto (Supabase, via pooler), blips de rede/reciclagem de
+ * conexão são na maioria das vezes transitórios — tentar de novo silenciosamente
+ * evita expor ao usuário um erro por uma instabilidade momentânea.
+ */
+async function transacaoComRetry(prisma, callback, options) {
+  let ultimoErro;
+  for (let tentativa = 1; tentativa <= P2028_TENTATIVAS; tentativa++) {
+    try {
+      return await prisma.$transaction(callback, options);
+    } catch (erro) {
+      ultimoErro = erro;
+      const quedaDeConexao = erro?.code === "P2028" && /transaction not found/i.test(erro?.meta?.error ?? "");
+      if (!quedaDeConexao || tentativa === P2028_TENTATIVAS) throw erro;
+      console.warn(
+        `[PrismaCatalogoRepository] transação caiu por queda de conexão (P2028, tentativa ${tentativa}/${P2028_TENTATIVAS}) — tentando de novo...`
+      ); // eslint-disable-line no-console
+      await aguardar(P2028_ESPERA_MS * tentativa);
+    }
+  }
+  throw ultimoErro;
+}
+
 /**
  * Resolve (find-or-create) a cadeia Marca -> Ferramenta -> VersaoTensao,
  * sempre escopada por empresaId (RNF11 — isolamento por instância: duas
@@ -94,7 +128,7 @@ class PrismaCatalogoRepository extends CatalogoRepository {
   async registrarResultadoExtracao(catalogoId, empresaId, dados) {
     const { marca, modelo, tensao, pecas, confiancaCampos, confiancaGeral, status, motivoPendencia, camposAusentes } = dados;
 
-    return this.prisma.$transaction(async (tx) => {
+    return transacaoComRetry(this.prisma, async (tx) => {
       let versaoTensaoId = null;
       if (marca && modelo && tensao) {
         versaoTensaoId = await resolverVersaoTensaoId(tx, { empresaId, marca, modelo, tensao });
@@ -132,32 +166,40 @@ class PrismaCatalogoRepository extends CatalogoRepository {
   async registrarValidacao(catalogoId, empresaId, dados) {
     const { marca, modelo, tensao, pecas } = dados;
 
-    return this.prisma.$transaction(async (tx) => {
+    return transacaoComRetry(this.prisma, async (tx) => {
       const versaoTensaoId = await resolverVersaoTensaoId(tx, { empresaId, marca, modelo, tensao });
 
-      for (const peca of pecas) {
-        if (peca.id) {
-          await tx.peca.update({
-            where: { id: peca.id },
-            data: {
-              codigo: peca.codigo,
-              descricao: peca.descricao ?? null,
-              posicaoVisual: peca.posicaoVisual ?? null,
-              versaoTensaoId,
-            },
-          });
-        } else {
-          await tx.peca.create({
-            data: {
-              empresaId,
-              codigo: peca.codigo,
-              descricao: peca.descricao ?? null,
-              posicaoVisual: peca.posicaoVisual ?? null,
-              versaoTensaoId,
-              catalogoId,
-            },
-          });
-        }
+      // Peças já existentes (com id) só podem ser atualizadas uma a uma — o
+      // Prisma não tem um "updateMany com valor diferente por linha". Peças
+      // novas (sem id), por outro lado, vão todas num único createMany, pra
+      // reduzir o número de idas e voltas dentro da transação (menos round
+      // trips = menos exposição a queda de conexão contra o banco remoto).
+      const pecasExistentes = pecas.filter((peca) => peca.id);
+      const pecasNovas = pecas.filter((peca) => !peca.id);
+
+      for (const peca of pecasExistentes) {
+        await tx.peca.update({
+          where: { id: peca.id },
+          data: {
+            codigo: peca.codigo,
+            descricao: peca.descricao ?? null,
+            posicaoVisual: peca.posicaoVisual ?? null,
+            versaoTensaoId,
+          },
+        });
+      }
+
+      if (pecasNovas.length > 0) {
+        await tx.peca.createMany({
+          data: pecasNovas.map((peca) => ({
+            empresaId,
+            codigo: peca.codigo,
+            descricao: peca.descricao ?? null,
+            posicaoVisual: peca.posicaoVisual ?? null,
+            versaoTensaoId,
+            catalogoId,
+          })),
+        });
       }
 
       await tx.catalogo.update({
@@ -214,7 +256,7 @@ class PrismaCatalogoRepository extends CatalogoRepository {
   async atualizarCatalogo(catalogoId, empresaId, dados) {
     const { marca, modelo, tensao, pecas } = dados;
 
-    return this.prisma.$transaction(async (tx) => {
+    return transacaoComRetry(this.prisma, async (tx) => {
       const versaoTensaoId = await resolverVersaoTensaoId(tx, { empresaId, marca, modelo, tensao });
 
       // RF09/A3 — peças que existiam no catálogo mas não vieram mais na lista
@@ -226,29 +268,34 @@ class PrismaCatalogoRepository extends CatalogoRepository {
         await tx.peca.deleteMany({ where: { id: { in: idsParaExcluir } } });
       }
 
-      for (const peca of pecas) {
-        if (peca.id) {
-          await tx.peca.update({
-            where: { id: peca.id },
-            data: {
-              codigo: peca.codigo,
-              descricao: peca.descricao ?? null,
-              posicaoVisual: peca.posicaoVisual ?? null,
-              versaoTensaoId,
-            },
-          });
-        } else {
-          await tx.peca.create({
-            data: {
-              empresaId,
-              codigo: peca.codigo,
-              descricao: peca.descricao ?? null,
-              posicaoVisual: peca.posicaoVisual ?? null,
-              versaoTensaoId,
-              catalogoId,
-            },
-          });
-        }
+      // Mesma otimização de round-trips do registrarValidacao: peças novas
+      // (sem id) vão todas juntas num único createMany.
+      const pecasParaAtualizar = pecas.filter((peca) => peca.id);
+      const pecasNovas = pecas.filter((peca) => !peca.id);
+
+      for (const peca of pecasParaAtualizar) {
+        await tx.peca.update({
+          where: { id: peca.id },
+          data: {
+            codigo: peca.codigo,
+            descricao: peca.descricao ?? null,
+            posicaoVisual: peca.posicaoVisual ?? null,
+            versaoTensaoId,
+          },
+        });
+      }
+
+      if (pecasNovas.length > 0) {
+        await tx.peca.createMany({
+          data: pecasNovas.map((peca) => ({
+            empresaId,
+            codigo: peca.codigo,
+            descricao: peca.descricao ?? null,
+            posicaoVisual: peca.posicaoVisual ?? null,
+            versaoTensaoId,
+            catalogoId,
+          })),
+        });
       }
 
       // Toque no Catalogo só para bumpar atualizadoEm (o status não muda — já

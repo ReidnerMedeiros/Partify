@@ -200,6 +200,36 @@ backend/tests/
 └── integration/    # vários Use Cases reais cruzando requisitos
 ```
 
+## Integração contínua (GitHub Actions)
+
+O workflow `.github/workflows/ci.yml` roda automaticamente a cada push/PR na branch `main`, com dois jobs em paralelo:
+
+- **backend-tests**: `npm test --workspace backend` (Jest, ~256 testes contra os fakes em memória — não precisa de banco nem de segredos configurados no CI).
+- **frontend-build**: `npm run build --workspace frontend` (garante que o build do Vite não quebrou).
+
+Se algum dos dois falhar, o commit/PR aparece marcado com ❌ no GitHub — é o sinal de que algo quebrou antes de ir pra produção.
+
+## Deploy (Render + Vercel)
+
+### Backend no Render
+
+1. Crie um **Web Service** apontando para este repositório, com **Root Directory** `backend`.
+2. Build Command: `npm install && npm run build` (o script `build` roda `prisma generate` e `prisma migrate deploy` contra o banco de produção).
+3. Start Command: `npm start`.
+4. Cadastre as variáveis de ambiente no painel do Render (não use o `.env` local — ele fica fora do repositório): `DATABASE_URL`, `DIRECT_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_EMBEDDING_MODEL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET`, `FRONTEND_URL` (URL do frontend no Vercel, usada pelo CORS e pelo link de redefinição de senha) e, se quiser envio real de e-mail, as `SMTP_*`.
+5. Rode manualmente uma vez, direto no SQL Editor do Supabase (ou via `psql`), o script `backend/prisma/manual/immutable_audit_log.sql` — ele não é aplicado pelas migrations do Prisma.
+
+### Frontend no Vercel
+
+1. Importe o repositório com **Root Directory** `frontend` (o `frontend/vercel.json` já inclui o rewrite necessário para o roteamento client-side do React Router funcionar em URLs diretas, ex. dar refresh em `/menu`).
+2. Framework preset: Vite (build command `npm run build`, output `dist`).
+3. Cadastre a env var `VITE_API_URL` apontando para a URL pública do backend no Render.
+4. Depois do primeiro deploy do frontend, volte no Render e atualize `FRONTEND_URL` com a URL definitiva do Vercel.
+
+### Observação de segurança
+
+Credenciais reais (senha do banco, `JWT_SECRET`, chave Gemini, service role key do Supabase) não devem ser as mesmas usadas em desenvolvimento se elas já tiverem sido expostas em algum momento (chat, log, commit) — gere valores novos antes de configurá-las em produção.
+
 ## Rotas do backend
 
 | Método | Rota | Autenticado | Requisito |
