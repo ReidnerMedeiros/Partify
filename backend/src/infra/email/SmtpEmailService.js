@@ -1,5 +1,6 @@
 const nodemailer = require("nodemailer");
 const { EmailService } = require("../../domain/services/EmailService");
+const { montarHtmlRedefinicaoSenha, montarTextoRedefinicaoSenha } = require("./templates/redefinicaoSenhaTemplate");
 
 /**
  * Implementação de EmailService via SMTP genérico (nodemailer). Usada em produção
@@ -31,8 +32,8 @@ class SmtpEmailService extends EmailService {
       from: this.remetente,
       to: destinatario,
       subject: "Partify — Redefinição de senha",
-      text: `Foi solicitada a redefinição da sua senha no Partify.\n\nAcesse o link a seguir para definir uma nova senha (válido por 30 minutos):\n${link}\n\nSe você não fez essa solicitação, ignore este e-mail.`,
-      html: `<p>Foi solicitada a redefinição da sua senha no Partify.</p><p>Acesse o link a seguir para definir uma nova senha (válido por 30 minutos):</p><p><a href="${link}">${link}</a></p><p>Se você não fez essa solicitação, ignore este e-mail.</p>`,
+      text: montarTextoRedefinicaoSenha({ link }),
+      html: montarHtmlRedefinicaoSenha({ link }),
     });
   }
 }

@@ -69,3 +69,13 @@ backend/storage/
 # Saída de ferramenta de análise de grafo de código (cache/relatório gerado,
 # não é código do projeto nem necessário pra rodar)
 /graphify-out/
+
+# Impeccable (skill de design para IA, uso pessoal do autor pra iterar em telas)
+# — arquivos de config/produto/design e os artefatos instalados nas ferramentas
+# de IA (skills, agents, hooks). Nada disso é necessário pra rodar o projeto.
+.impeccable/
+PRODUCT.md
+DESIGN.md
+/.github/agents/
+/.github/hooks/
+/.github/skills/

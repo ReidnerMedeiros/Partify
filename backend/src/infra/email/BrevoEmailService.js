@@ -1,4 +1,5 @@
 const { EmailService } = require("../../domain/services/EmailService");
+const { montarHtmlRedefinicaoSenha, montarTextoRedefinicaoSenha } = require("./templates/redefinicaoSenhaTemplate");
 
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
@@ -33,8 +34,8 @@ class BrevoEmailService extends EmailService {
         sender: { name: this.remetenteNome, email: this.remetenteEmail },
         to: [{ email: destinatario }],
         subject: "Partify — Redefinição de senha",
-        textContent: `Foi solicitada a redefinição da sua senha no Partify.\n\nAcesse o link a seguir para definir uma nova senha (válido por 30 minutos):\n${link}\n\nSe você não fez essa solicitação, ignore este e-mail.`,
-        htmlContent: `<p>Foi solicitada a redefinição da sua senha no Partify.</p><p>Acesse o link a seguir para definir uma nova senha (válido por 30 minutos):</p><p><a href="${link}">${link}</a></p><p>Se você não fez essa solicitação, ignore este e-mail.</p>`,
+        textContent: montarTextoRedefinicaoSenha({ link }),
+        htmlContent: montarHtmlRedefinicaoSenha({ link }),
       }),
     });
 

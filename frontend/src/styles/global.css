@@ -87,6 +87,12 @@ a {
   line-height: 1.4;
 }
 
+.auth-card__forgot {
+  text-align: right;
+  margin: -8px 0 16px;
+  font-size: 0.8rem;
+}
+
 .auth-card__footer {
   text-align: center;
   margin-top: 18px;

@@ -52,6 +52,8 @@ function LoginPage() {
           <Field
             id="login"
             label="LOGIN"
+            autoComplete="username"
+            autoFocus
             value={valores.login}
             onChange={(e) => setValores((atual) => ({ ...atual, login: e.target.value }))}
           />
@@ -59,14 +61,13 @@ function LoginPage() {
             id="senha"
             type="password"
             label="SENHA"
+            autoComplete="current-password"
             value={valores.senha}
             onChange={(e) => setValores((atual) => ({ ...atual, senha: e.target.value }))}
           />
 
-          <p style={{ textAlign: "right", marginTop: -8, marginBottom: 16 }}>
-            <Link to="/recuperar-senha" style={{ fontSize: "0.8rem" }}>
-              Esqueci minha senha
-            </Link>
+          <p className="auth-card__forgot">
+            <Link to="/recuperar-senha">Esqueci minha senha</Link>
           </p>
 
           <button type="submit" className="btn btn--primary btn--block" disabled={enviando}>
