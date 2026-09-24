@@ -209,6 +209,14 @@ O workflow `.github/workflows/ci.yml` roda automaticamente a cada push/PR na bra
 
 Se algum dos dois falhar, o commit/PR aparece marcado com ❌ no GitHub — é o sinal de que algo quebrou antes de ir pra produção.
 
+## Keepalive do Supabase (evitar pause por inatividade)
+
+Planos gratuitos do Supabase pausam o projeto inteiro após 7 dias sem nenhuma consulta real ao banco (visitar o dashboard ou só bater na API não conta — precisa ser uma query de verdade). O workflow `.github/workflows/keepalive.yml` chama `GET /health` (que faz um `SELECT 1` no Postgres) 3x por semana, bem abaixo do limite, só pra manter o projeto ativo.
+
+Pra funcionar, cadastre uma variável de repositório no GitHub: **Settings → Secrets and variables → Actions → aba "Variables" → "New repository variable"**, com `BACKEND_URL` = a URL do backend no Render (ex. `https://partify-backend-l1ye.onrender.com`, sem barra no final).
+
+Esse workflow não tenta manter o Render acordado o tempo todo — o cold start ocasional (~1 min) do plano gratuito do Render é aceito como trade-off; ele acorda sozinho na primeira requisição real (ex. o login).
+
 ## Deploy (Render + Vercel)
 
 ### Backend no Render

@@ -1,0 +1,28 @@
+name: Keepalive Supabase
+
+# Planos gratuitos do Supabase pausam o projeto inteiro após 7 dias sem
+# nenhuma consulta real ao banco (visita ao dashboard ou só requisição HTTP
+# não conta). Este workflow chama a rota GET /health do backend (que faz um
+# "SELECT 1" no banco) algumas vezes por semana, bem abaixo do limite de 7
+# dias, só pra manter o Supabase ativo. Não tenta manter o Render acordado —
+# o cold start ocasional (~1 min) do plano gratuito do Render é aceito como
+# trade-off normal; ele acorda sozinho na primeira requisição real (login).
+
+on:
+  schedule:
+    # 06:00 UTC às segundas, quartas e sextas — 3x por semana, com folga
+    # confortável em relação ao limite de 7 dias do Supabase.
+    - cron: "0 6 * * 1,3,5"
+  workflow_dispatch: {}
+
+jobs:
+  ping-health:
+    name: Ping GET /health (backend no Render)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamar /health
+        run: |
+          echo "Chamando ${BACKEND_URL}/health..."
+          curl --fail --show-error --silent "${BACKEND_URL}/health"
+        env:
+          BACKEND_URL: ${{ vars.BACKEND_URL }}
