@@ -355,4 +355,4 @@ class PrismaCatalogoRepository extends CatalogoRepository {
   }
 }
 
-module.exports = { PrismaCatalogoRepository };
+module.exports = { PrismaCatalogoRepository, transacaoComRetry };

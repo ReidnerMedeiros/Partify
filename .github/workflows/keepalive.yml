@@ -4,9 +4,14 @@ name: Keepalive Supabase
 # nenhuma consulta real ao banco (visita ao dashboard ou só requisição HTTP
 # não conta). Este workflow chama a rota GET /health do backend (que faz um
 # "SELECT 1" no banco) algumas vezes por semana, bem abaixo do limite de 7
-# dias, só pra manter o Supabase ativo. Não tenta manter o Render acordado —
-# o cold start ocasional (~1 min) do plano gratuito do Render é aceito como
-# trade-off normal; ele acorda sozinho na primeira requisição real (login).
+# dias, só pra manter o Supabase ativo.
+#
+# O backend hoje roda numa VPS própria (Oracle Cloud, via PM2 + Nginx), não
+# mais no Render — o PM2 já mantém o processo sempre ativo (sem cold start
+# de plano gratuito), então este workflow serve só pro propósito original:
+# manter o Supabase fora do pause por inatividade. A variável BACKEND_URL
+# (Settings > Secrets and variables > Actions > Variables, no GitHub) precisa
+# apontar pro endereço atual da VPS, não mais pra URL antiga do Render.
 
 on:
   schedule:
@@ -17,7 +22,7 @@ on:
 
 jobs:
   ping-health:
-    name: Ping GET /health (backend no Render)
+    name: Ping GET /health (backend na VPS)
     runs-on: ubuntu-latest
     steps:
       - name: Chamar /health

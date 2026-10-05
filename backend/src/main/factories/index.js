@@ -121,9 +121,12 @@ const fileStorageService = process.env.SUPABASE_URL
 // RF07/RF08 — modelo configurável via .env porque os identificadores de modelo da
 // Gemini API mudam com frequência; confirme o valor atual em
 // https://ai.google.dev/gemini-api/docs/models antes de configurar em produção.
+// GEMINI_FALLBACK_MODELS (opcional, separados por vírgula): modelos tentados em
+// ordem quando o principal está indisponível (503/429/5xx).
 const extractionService = new GeminiExtractionService({
   apiKey: process.env.GEMINI_API_KEY,
   model: process.env.GEMINI_MODEL,
+  fallbackModels: process.env.GEMINI_FALLBACK_MODELS,
 });
 // RF08/RF09 — Agente Validador: gera o embedding só depois da confirmação
 // humana (decisão #16). Instância própria, isolada do Agente de Consulta.
@@ -145,6 +148,7 @@ const embeddingServiceConsulta = new GeminiEmbeddingServiceConsulta({
 const ragService = new GeminiRAGService({
   apiKey: process.env.GEMINI_API_KEY,
   model: process.env.GEMINI_MODEL,
+  fallbackModels: process.env.GEMINI_FALLBACK_MODELS,
 });
 
 // --- Use Cases ---------------------------------------------------------------
@@ -277,4 +281,27 @@ module.exports = {
   logAuditoriaController,
   authMiddleware,
   exigirAdministrador,
+  // Expostos também os adaptadores de infra e serviços (além dos controllers
+  // acima, já usados pelas rotas em produção) — usado pelos testes de API
+  // (backend/tests/api/) para popular/inspecionar o estado em memória por
+  // trás da instância de `app` sob teste, já que os controllers não expõem
+  // os repositórios diretamente. Nenhum impacto em produção: são só exports
+  // adicionais do mesmo composition root, nada aqui muda de comportamento.
+  empresaRepository,
+  usuarioRepository,
+  logAuditoriaRepository,
+  sessaoRevogadaRepository,
+  tokenRedefinicaoSenhaRepository,
+  catalogoRepository,
+  validacaoRepository,
+  componenteRepository,
+  hashService,
+  tokenService,
+  randomTokenService,
+  emailService,
+  fileStorageService,
+  extractionService,
+  embeddingServiceValidador,
+  embeddingServiceConsulta,
+  ragService,
 };

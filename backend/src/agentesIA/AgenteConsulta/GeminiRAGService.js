@@ -1,6 +1,7 @@
 const { GoogleGenAI } = require("@google/genai");
 const { RAGService } = require("../../domain/services/RAGService");
 const { INSTRUCAO_SISTEMA, montarPromptUsuario, ESQUEMA_RESPOSTA } = require("./prompts/consultaPrompt");
+const { gerarConteudoComFallback, listarModelos } = require("../comum/gerarConteudoComFallback");
 
 const SITUACOES_VALIDAS = ["RESPONDIDO", "CONTEXTO_INSUFICIENTE", "SEM_CONTEXTO_RELEVANTE"];
 
@@ -29,15 +30,19 @@ function logarConsumoTokens(resposta) {
  * da infra genérica (Prisma, storage) em src/infra/.
  */
 class GeminiRAGService extends RAGService {
-  constructor({ apiKey, model }) {
+  constructor({ apiKey, model, fallbackModels }) {
     super();
     this.model = model;
+    this.modelos = listarModelos(model, fallbackModels);
     this.client = new GoogleGenAI({ apiKey });
   }
 
   async gerarResposta({ pergunta, contexto }) {
-    const resposta = await this.client.models.generateContent({
-      model: this.model,
+    const resposta = await gerarConteudoComFallback({
+      client: this.client,
+      modelos: this.modelos,
+      rotulo: "Agente de Consulta",
+      requisicao: {
       contents: [
         {
           role: "user",
@@ -48,6 +53,7 @@ class GeminiRAGService extends RAGService {
         systemInstruction: INSTRUCAO_SISTEMA,
         responseMimeType: "application/json",
         responseSchema: ESQUEMA_RESPOSTA,
+      },
       },
     });
 

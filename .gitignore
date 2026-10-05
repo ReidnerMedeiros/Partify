@@ -21,6 +21,28 @@ backend/generated/
 # local de desenvolvimento — nunca deveriam ir pro repositório.
 backend/storage/
 
+# PDFs reais de catálogos de fabricantes, usados manualmente no teste de
+# acurácia da IA (RNF10) — material com direitos do fabricante, não deve ir
+# pro repositório público. Os gabaritos (dados extraídos manualmente, em JSON)
+# continuam versionados normalmente; só o PDF binário fica de fora.
+backend/tests/acuracia-ia/pdfs/
+
+# Saída temporária de `npm test > arquivo.txt`, usada só para depuração durante
+# o desenvolvimento (terminal não permitia copiar o log inteiro) — não é
+# artefato do projeto.
+backend/resultado-testes-api.txt
+backend/tests/pdfs/
+
+# Playwright (E2E, item 5 do plano de testes avançados) — relatórios/artefatos
+# gerados a cada execução local, não são código do projeto.
+e2e/test-results/
+e2e/playwright-report/
+e2e/playwright/.cache/
+# Log do `npm run dev:backend` redirecionado a arquivo (mesmo workaround do
+# resultado-testes-api.txt) — usado pela jornada 3 (recuperação de senha) para
+# ler o link de redefinição impresso pelo ConsoleEmailService.
+backend/dev-server.log
+
 # Editores/IDEs
 .vscode/
 .idea/
@@ -57,6 +79,8 @@ backend/storage/
 /apresentacao-partify.md
 /doc1-arquitetura-persistencia.md
 /doc2-testes-avaliacao.md
+/PLANO_TESTES_AVANCADOS.md
+/plano_testes_avancados.md
 /CLICKUP_PROMPT.md
 /clickup_prompt.md
 /PLANO_CORRECAO_TESTES.md

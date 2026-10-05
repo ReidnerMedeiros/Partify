@@ -200,11 +200,22 @@ backend/tests/
 └── integration/    # vários Use Cases reais cruzando requisitos
 ```
 
+## Análise estática de código (ESLint)
+
+Tanto o backend quanto o frontend têm o ESLint configurado (`eslint:recommended`, com `plugin:react`/`plugin:react-hooks` no frontend), rodando contra o código de produção (não contra os testes, no backend, nem contra `dist/`, no frontend).
+
+```bash
+npm run lint --workspace backend
+npm run lint --workspace frontend
+```
+
+Última execução (03/10/2026): **0 erros e 0 warnings** em ambos os pacotes.
+
 ## Integração contínua (GitHub Actions)
 
 O workflow `.github/workflows/ci.yml` roda automaticamente a cada push/PR na branch `main`, com dois jobs em paralelo:
 
-- **backend-tests**: `npm test --workspace backend` (Jest, ~256 testes contra os fakes em memória — não precisa de banco nem de segredos configurados no CI).
+- **backend-tests**: `npm test --workspace backend` (Jest, ~257 testes contra os fakes em memória — não precisa de banco nem de segredos configurados no CI).
 - **frontend-build**: `npm run build --workspace frontend` (garante que o build do Vite não quebrou).
 
 Se algum dos dois falhar, o commit/PR aparece marcado com ❌ no GitHub — é o sinal de que algo quebrou antes de ir pra produção.

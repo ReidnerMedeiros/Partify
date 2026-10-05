@@ -104,6 +104,29 @@ describe("ExtrairDadosCatalogoUseCase — RF07, fluxo básico + A1 + E1 + E2", (
     expect(atual.catalogo.status).toBe("PENDENTE_EXTRACAO");
   });
 
+  test("teste de recuperação: depois de uma falha E1, uma nova tentativa bem-sucedida não deixa resíduo (peças duplicadas) do estado anterior", async () => {
+    const { useCase, extractionService, catalogo, catalogoRepository } = await montarUseCaseComCatalogo();
+
+    // 1ª tentativa: falha de comunicação (E1) — nada deve ter sido persistido.
+    extractionService.deveFalhar = true;
+    await expect(
+      useCase.execute({ catalogoId: catalogo.id, usuarioId: "usuario-1", empresaId: EMPRESA_ID })
+    ).rejects.toThrow(ServiceUnavailableError);
+
+    const apósFalha = await catalogoRepository.buscarComPecas(catalogo.id);
+    expect(apósFalha.pecas).toHaveLength(0);
+
+    // 2ª tentativa (retry do usuário, mesmo catalogoId): sucesso.
+    extractionService.deveFalhar = false;
+    extractionService.proximaResposta = respostaCompleta();
+    const resultado = await useCase.execute({ catalogoId: catalogo.id, usuarioId: "usuario-1", empresaId: EMPRESA_ID });
+
+    // Só as 2 peças da extração bem-sucedida — nenhum resíduo da tentativa que falhou.
+    expect(resultado.pecas).toHaveLength(2);
+    const finalNoRepositorio = await catalogoRepository.buscarComPecas(catalogo.id);
+    expect(finalNoRepositorio.pecas).toHaveLength(2);
+  });
+
   test("fluxo alternativo A1: extração parcial (modelo ausente) fica IRRESOLUVEL com camposAusentes", async () => {
     const { useCase, extractionService, catalogo } = await montarUseCaseComCatalogo();
     extractionService.proximaResposta = respostaCompleta({ modelo: null });

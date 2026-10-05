@@ -1,6 +1,7 @@
 const { GoogleGenAI } = require("@google/genai");
 const { ExtractionService } = require("../../domain/services/ExtractionService");
 const { INSTRUCAO_SISTEMA, montarPromptUsuario, ESQUEMA_RESPOSTA } = require("./prompts/extracaoPrompt");
+const { gerarConteudoComFallback, listarModelos } = require("../comum/gerarConteudoComFallback");
 
 function extrairTextoResposta(resposta) {
   // Pequena defesa contra variações de formato do SDK (@google/genai) entre versões —
@@ -48,15 +49,19 @@ function logarConsumoTokens(rotulo, resposta) {
  * atual em https://ai.google.dev/gemini-api/docs/models antes de configurar em produção.
  */
 class GeminiExtractionService extends ExtractionService {
-  constructor({ apiKey, model }) {
+  constructor({ apiKey, model, fallbackModels }) {
     super();
     this.model = model;
+    this.modelos = listarModelos(model, fallbackModels);
     this.client = new GoogleGenAI({ apiKey });
   }
 
   async extrairDados({ arquivoBuffer, nomeArquivo, marcaSugerida, modeloSugerido }) {
-    const resposta = await this.client.models.generateContent({
-      model: this.model,
+    const resposta = await gerarConteudoComFallback({
+      client: this.client,
+      modelos: this.modelos,
+      rotulo: "Agente Extrator",
+      requisicao: {
       contents: [
         {
           role: "user",
@@ -70,6 +75,7 @@ class GeminiExtractionService extends ExtractionService {
         systemInstruction: INSTRUCAO_SISTEMA,
         responseMimeType: "application/json",
         responseSchema: ESQUEMA_RESPOSTA,
+      },
       },
     });
 

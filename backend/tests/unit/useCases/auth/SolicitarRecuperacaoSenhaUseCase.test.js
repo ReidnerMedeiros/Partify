@@ -115,4 +115,18 @@ describe("SolicitarRecuperacaoSenhaUseCase — RF03, fluxo básico + exceção E
 
     expect(ctx.emailService.enviados).toHaveLength(1);
   });
+
+  test("registra o empresaId do usuário no log de auditoria (RNF11 — isolamento multi-tenant)", async () => {
+    const ctx = montarUseCase();
+    ctx.usuarioRepository.usuarios.push({
+      id: "usuario-1",
+      login: "admin",
+      email: "admin@x.com",
+      empresaId: "empresa-1",
+    });
+
+    await ctx.useCase.execute({ login: "admin", email: "admin@x.com" });
+
+    expect(ctx.logAuditoriaRepository.registros[0].empresaId).toBe("empresa-1");
+  });
 });
