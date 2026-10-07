@@ -145,6 +145,7 @@ function CatalogoPage() {
                 <thead>
                   <tr>
                     <th>Código</th>
+                    <th>Qtd.</th>
                     <th>Descrição</th>
                     <th>Marca</th>
                     <th>Modelo</th>
@@ -160,6 +161,7 @@ function CatalogoPage() {
                       <td>
                         <span className="table-link">{peca.codigo}</span>
                       </td>
+                      <td>{peca.quantidade ?? "—"}</td>
                       <td>{peca.descricao || "—"}</td>
                       <td>{peca.marca}</td>
                       <td>{peca.modelo}</td>

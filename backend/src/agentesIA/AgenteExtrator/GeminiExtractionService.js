@@ -2,6 +2,7 @@ const { GoogleGenAI } = require("@google/genai");
 const { ExtractionService } = require("../../domain/services/ExtractionService");
 const { INSTRUCAO_SISTEMA, montarPromptUsuario, ESQUEMA_RESPOSTA } = require("./prompts/extracaoPrompt");
 const { gerarConteudoComFallback, listarModelos } = require("../comum/gerarConteudoComFallback");
+const { normalizarQuantidade } = require("../../domain/validators/quantidadePecaValidator");
 
 function extrairTextoResposta(resposta) {
   // Pequena defesa contra variações de formato do SDK (@google/genai) entre versões —
@@ -95,6 +96,7 @@ class GeminiExtractionService extends ExtractionService {
       codigo: peca.codigo,
       descricao: peca.descricao ?? null,
       posicaoVisual: peca.posicaoVisual ?? null,
+      quantidade: normalizarQuantidade(peca.quantidade).valor,
       confianca: clamp0a100(peca.confianca),
     }));
 

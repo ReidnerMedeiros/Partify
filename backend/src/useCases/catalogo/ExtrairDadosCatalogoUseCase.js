@@ -3,6 +3,7 @@ const { StatusCatalogo } = require("../../domain/enums/StatusCatalogo");
 const { TipoAcao } = require("../../domain/enums/TipoAcao");
 
 const { avaliarDescricaoPeca } = require("../../domain/validators/descricaoPecaValidator");
+const { corrigirCodigosComQuantidade } = require("../../domain/validators/codigoPecaValidator");
 
 // Peças cuja descrição parece truncada no próprio documento têm a confiança
 // limitada a este teto, para ficarem fora da faixa "alta" na tela de validação.
@@ -95,7 +96,7 @@ class ExtrairDadosCatalogoUseCase {
       marca: extracao.marca,
       modelo: extracao.modelo,
       tensao: extracao.tensao,
-      pecas: extracao.pecas.map((peca) =>
+      pecas: corrigirCodigosComQuantidade(extracao.pecas).pecas.map((peca) =>
         avaliarDescricaoPeca(peca.descricao).incompleta
           ? { ...peca, confianca: Math.min(peca.confianca ?? TETO_CONFIANCA_DESCRICAO_INCOMPLETA, TETO_CONFIANCA_DESCRICAO_INCOMPLETA) }
           : peca

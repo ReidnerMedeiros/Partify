@@ -188,6 +188,7 @@ function ConsultarComponentesPage() {
                   <tr>
                     <th>Código</th>
                     <th>Pos.</th>
+                    <th>Qtd.</th>
                     <th>Descrição</th>
                     <th>Marca</th>
                     <th>Modelo</th>
@@ -202,6 +203,7 @@ function ConsultarComponentesPage() {
                         <span className="table-link">{item.codigo}</span>
                       </td>
                       <td>{item.posicaoVisual || "—"}</td>
+                      <td>{item.quantidade ?? "—"}</td>
                       <td>{item.descricao || "—"}</td>
                       <td>{item.marca}</td>
                       <td>

@@ -1,5 +1,6 @@
 const { ServiceUnavailableError } = require("../../domain/errors/DomainErrors");
 const { avaliarDescricaoPeca } = require("../../domain/validators/descricaoPecaValidator");
+const { comprimentoPadraoDosCodigos, avaliarCodigoContraPadrao } = require("../../domain/validators/codigoPecaValidator");
 
 /**
  * Adapta requisições HTTP para os casos de uso do RF06 (Importar Catálogo), RF07
@@ -245,6 +246,8 @@ class CatalogoController {
 }
 
 function apresentarResultado(resultado) {
+  const padraoDeCodigo = comprimentoPadraoDosCodigos(resultado.pecas.map((peca) => peca.codigo));
+
   return {
     id: resultado.catalogo.id,
     nomeArquivo: resultado.catalogo.nomeArquivo,
@@ -258,12 +261,18 @@ function apresentarResultado(resultado) {
     tensao: resultado.tensao,
     pecas: resultado.pecas.map((peca) => {
       const avaliacao = avaliarDescricaoPeca(peca.descricao);
+      const avaliacaoCodigo = avaliarCodigoContraPadrao(peca.codigo, padraoDeCodigo);
       return {
         id: peca.id,
         codigo: peca.codigo,
         descricao: peca.descricao,
         posicaoVisual: peca.posicaoVisual,
+        quantidade: peca.quantidade,
         confianca: peca.confianca,
+        // Sinal para a tela de validação: o código está fora do padrão do documento
+        // (pode ter vindo misturado com outra coluna, como a quantidade).
+        codigoSuspeito: avaliacaoCodigo.suspeito,
+        motivoCodigoSuspeito: avaliacaoCodigo.motivo,
         // Sinal para a tela de validação: a designação parece truncada no PDF.
         descricaoIncompleta: avaliacao.incompleta,
         motivosDescricaoIncompleta: avaliacao.motivos,

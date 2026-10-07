@@ -55,6 +55,7 @@ function montarPromptUsuario({ pergunta, contexto }) {
       codigo: peca.codigo,
       descricao: peca.descricao,
       posicaoVisual: peca.posicaoVisual,
+      quantidade: peca.quantidade ?? null,
       marca: peca.marca,
       modelo: peca.modelo,
       tensao: peca.tensao,

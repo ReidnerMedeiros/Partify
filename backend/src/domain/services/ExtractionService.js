@@ -33,7 +33,7 @@ class ExtractionService {
    *   marca: string|null,
    *   modelo: string|null,
    *   tensao: string|null,
-   *   pecas: Array<{ codigo: string, descricao: string|null, posicaoVisual: string|null, confianca: number }>,
+   *   pecas: Array<{ codigo: string, descricao: string|null, posicaoVisual: string|null, quantidade: number|null, confianca: number }>,
    *   confiancaCampos: { marca: number, modelo: number, tensao: number },
    *   confiancaGeral: number,
    * }>}

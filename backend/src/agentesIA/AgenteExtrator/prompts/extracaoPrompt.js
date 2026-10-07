@@ -52,6 +52,27 @@ TAREFA: identifique, no documento, a marca do fabricante, o modelo da ferramenta
 a tensão de operação e a lista de peças mostradas na vista explodida (código da
 peça, posição visual/número de referência no diagrama, e descrição da peça).
 
+LEITURA DA TABELA DE PEÇAS (regra geral, vale para qualquer fabricante e layout):
+leia a tabela COLUNA POR COLUNA, usando a linha de cabeçalho para identificar o
+que cada coluna representa. O nome e a ordem das colunas variam entre
+documentos. Os tipos de coluna mais comuns são:
+- posição / número de referência no diagrama (cabeçalhos como "N° de", "Pos.",
+  "Item", "Ref.", "No."): vai em "posicaoVisual";
+- quantidade da peça (cabeçalhos como "Un", "Un.", "Qtd", "Qtde", "Quant.",
+  "Quantidade", "Qty", "Q'ty", "Pcs", "Stk", "Stück"): vai em "quantidade", como
+  número inteiro (use null se o documento não trouxer essa coluna);
+- código da peça (cabeçalhos como "N° de peça", "Código", "Part No.", "Ref. peça",
+  "Nº de pedido"): vai em "codigo";
+- designação / descrição da peça: vai em "descricao";
+- observações / notas adicionais: não são o código nem a quantidade.
+REGRA CRÍTICA: o campo "codigo" deve conter SOMENTE o conteúdo da coluna de código
+da peça. Nunca inclua nele números ou textos de outras colunas, em especial a
+posição e a quantidade, que costumam aparecer imediatamente antes do código na
+mesma linha. Por exemplo, na linha "2 | 1 | 9 618 085 763 | SAPATA POLAR", a
+posição é 2, a quantidade é 1 e o código é "9 618 085 763" (e não "1 9 618 085
+763"). Em caso de dúvida sobre qual coluna é qual, use o cabeçalho e o padrão das
+demais linhas da mesma tabela.
+
 TENSÃO: normalize para exatamente um destes valores: ${Object.values(EnumTensao).join(", ")}.
 Use NAO_INFORMADO quando o documento não indicar a tensão.
 
@@ -129,6 +150,7 @@ const ESQUEMA_RESPOSTA = {
           codigo: { type: "string" },
           descricao: { type: "string", nullable: true },
           posicaoVisual: { type: "string", nullable: true },
+          quantidade: { type: "integer", nullable: true },
           confianca: { type: "number" },
         },
         required: ["codigo", "confianca"],

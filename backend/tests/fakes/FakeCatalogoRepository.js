@@ -84,6 +84,7 @@ class FakeCatalogoRepository {
           codigo: peca.codigo,
           descricao: peca.descricao ?? null,
           posicaoVisual: peca.posicaoVisual ?? null,
+          quantidade: peca.quantidade ?? null,
           confianca: peca.confianca ?? null,
           versaoTensaoId,
           catalogoId,
@@ -115,6 +116,7 @@ class FakeCatalogoRepository {
           codigo: peca.codigo,
           descricao: peca.descricao ?? null,
           posicaoVisual: peca.posicaoVisual ?? null,
+          quantidade: peca.quantidade ?? null,
           versaoTensaoId,
         });
       } else {
@@ -124,6 +126,7 @@ class FakeCatalogoRepository {
           codigo: peca.codigo,
           descricao: peca.descricao ?? null,
           posicaoVisual: peca.posicaoVisual ?? null,
+          quantidade: peca.quantidade ?? null,
           confianca: null,
           versaoTensaoId,
           catalogoId,
@@ -156,6 +159,7 @@ class FakeCatalogoRepository {
           codigo: p.codigo,
           descricao: p.descricao,
           posicaoVisual: p.posicaoVisual,
+          quantidade: p.quantidade ?? null,
           marca: marcaRegistro?.nome ?? null,
           modelo: ferramenta?.modelo ?? null,
           tensao: versaoTensao?.tensao ?? null,
@@ -183,6 +187,7 @@ class FakeCatalogoRepository {
           codigo: peca.codigo,
           descricao: peca.descricao ?? null,
           posicaoVisual: peca.posicaoVisual ?? null,
+          quantidade: peca.quantidade ?? null,
           versaoTensaoId,
         });
       } else {
@@ -192,6 +197,7 @@ class FakeCatalogoRepository {
           codigo: peca.codigo,
           descricao: peca.descricao ?? null,
           posicaoVisual: peca.posicaoVisual ?? null,
+          quantidade: peca.quantidade ?? null,
           confianca: null,
           versaoTensaoId,
           catalogoId,

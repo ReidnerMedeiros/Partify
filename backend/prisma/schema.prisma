@@ -256,6 +256,9 @@ model Peca {
   codigo         String
   descricao      String?
   posicaoVisual  String?
+  // Quantidade da peça no conjunto (coluna "Un", "Qtd", "Qty" etc. das tabelas dos catálogos).
+  // Opcional: nem todo documento traz essa coluna.
+  quantidade     Int?
   // RF07 — índice de confiança (0-100) calculado pela IA para esta peça especificamente,
   // exibido como barra colorida na tela de validação (RF08) quando abaixo de 75%.
   confianca      Float?

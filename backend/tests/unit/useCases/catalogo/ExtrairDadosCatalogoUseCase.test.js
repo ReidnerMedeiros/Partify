@@ -60,6 +60,49 @@ describe("ExtrairDadosCatalogoUseCase — RF07, fluxo básico + A1 + E1 + E2", (
     expect(resultado.catalogo.confiancaGeral).toBe(82);
   });
 
+  test("persiste a quantidade de cada peça extraída", async () => {
+    const { useCase, extractionService, catalogo } = await montarUseCaseComCatalogo();
+    extractionService.proximaResposta = respostaCompleta({
+      pecas: [
+        { codigo: "1600A004GD", descricao: "Induzido 127V", posicaoVisual: "12", quantidade: 2, confianca: 95 },
+        { codigo: "2604321905", descricao: "Escova de carvão", posicaoVisual: "18", quantidade: null, confianca: 90 },
+      ],
+    });
+
+    const resultado = await useCase.execute({ catalogoId: catalogo.id, usuarioId: "usuario-1", empresaId: EMPRESA_ID });
+
+    expect(resultado.pecas[0].quantidade).toBe(2);
+    expect(resultado.pecas[1].quantidade).toBeNull();
+  });
+
+  test("remove a quantidade colada no código quando o documento tem um padrão de comprimento", async () => {
+    const { useCase, extractionService, catalogo } = await montarUseCaseComCatalogo();
+    extractionService.proximaResposta = respostaCompleta({
+      pecas: [
+        { codigo: "9 618 085 763", descricao: "SAPATA POLAR", posicaoVisual: "2", quantidade: 1, confianca: 95 },
+        { codigo: "9 618 083 506", descricao: "INDUZIDO", posicaoVisual: "3", quantidade: 1, confianca: 95 },
+        { codigo: "9 618 086 703", descricao: "INTERRUPTOR", posicaoVisual: "4", quantidade: 1, confianca: 95 },
+        { codigo: "2 9618 087 099", descricao: "PARAFUSO PARA 4x16 MM", posicaoVisual: "19", quantidade: null, confianca: 90 },
+      ],
+    });
+
+    const resultado = await useCase.execute({ catalogoId: catalogo.id, usuarioId: "usuario-1", empresaId: EMPRESA_ID });
+
+    expect(resultado.pecas[3].codigo).toBe("9618 087 099");
+    expect(resultado.pecas[3].quantidade).toBe(2);
+  });
+
+  test("limita a confiança de peças com descrição possivelmente truncada", async () => {
+    const { useCase, extractionService, catalogo } = await montarUseCaseComCatalogo();
+    extractionService.proximaResposta = respostaCompleta({
+      pecas: [{ codigo: "9618083219", descricao: "MANCAL DO", posicaoVisual: "5", quantidade: 1, confianca: 95 }],
+    });
+
+    const resultado = await useCase.execute({ catalogoId: catalogo.id, usuarioId: "usuario-1", empresaId: EMPRESA_ID });
+
+    expect(resultado.pecas[0].confianca).toBe(60);
+  });
+
   test("passa marcaSugerida/modeloSugerido (RF06-A1) para o ExtractionService", async () => {
     const { useCase, extractionService, catalogo } = await montarUseCaseComCatalogo();
     extractionService.proximaResposta = respostaCompleta();

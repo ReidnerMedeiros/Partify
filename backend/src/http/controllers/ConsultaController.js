@@ -30,6 +30,7 @@ class ConsultaController {
         codigo: item.codigo,
         descricao: item.descricao,
         posicaoVisual: item.posicaoVisual,
+        quantidade: item.quantidade ?? null,
         marca: item.marca,
         modelo: item.modelo,
         tensao: item.tensao,

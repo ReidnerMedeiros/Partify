@@ -59,6 +59,52 @@ describe("ValidarCatalogoUseCase — RF08, fluxo básico (\"Validar e Salvar\") 
     expect(resultado.pecas).toHaveLength(1);
   });
 
+  test("salva a quantidade informada pelo validador", async () => {
+    const { useCase, resultadoExtraido } = await montarUseCaseComCatalogoExtraido();
+
+    const resultado = await useCase.execute(
+      payloadValido(resultadoExtraido, {
+        pecas: resultadoExtraido.pecas.map((p) => ({
+          id: p.id,
+          codigo: p.codigo,
+          descricao: p.descricao,
+          posicaoVisual: p.posicaoVisual,
+          quantidade: "3",
+        })),
+      })
+    );
+
+    expect(resultado.pecas[0].quantidade).toBe(3);
+  });
+
+  test("quantidade vazia é aceita e salva como nula", async () => {
+    const { useCase, resultadoExtraido } = await montarUseCaseComCatalogoExtraido();
+
+    const resultado = await useCase.execute(payloadValido(resultadoExtraido));
+
+    expect(resultado.pecas[0].quantidade).toBeNull();
+  });
+
+  test("rejeita quantidade inválida (zero, negativa ou não numérica)", async () => {
+    const { useCase, resultadoExtraido } = await montarUseCaseComCatalogoExtraido();
+
+    for (const invalida of ["0", "-2", "abc", "1,5"]) {
+      await expect(
+        useCase.execute(
+          payloadValido(resultadoExtraido, {
+            pecas: resultadoExtraido.pecas.map((p) => ({
+              id: p.id,
+              codigo: p.codigo,
+              descricao: p.descricao,
+              posicaoVisual: p.posicaoVisual,
+              quantidade: invalida,
+            })),
+          })
+        )
+      ).rejects.toMatchObject({ fieldErrors: { "pecas.0.quantidade": expect.any(String) } });
+    }
+  });
+
   test("fluxo alternativo A1: aplica edições do validador aos campos", async () => {
     const { useCase, resultadoExtraido } = await montarUseCaseComCatalogoExtraido();
 

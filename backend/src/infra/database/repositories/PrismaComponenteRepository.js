@@ -7,6 +7,7 @@ function paraComponente(registro) {
     codigo: registro.codigo,
     descricao: registro.descricao,
     posicaoVisual: registro.posicaoVisual,
+    quantidade: registro.quantidade,
     marca: registro.versaoTensao.ferramenta.marca.nome,
     modelo: registro.versaoTensao.ferramenta.modelo,
     tensao: registro.versaoTensao.tensao,
@@ -52,7 +53,7 @@ class PrismaComponenteRepository extends ComponenteRepository {
     if (tensao) filtros.push(Prisma.sql`AND vt.tensao::text = ${tensao}`);
 
     const linhas = await this.prisma.$queryRaw`
-      SELECT p.id, p.codigo, p.descricao, p."posicaoVisual", p."catalogoId",
+      SELECT p.id, p.codigo, p.descricao, p."posicaoVisual", p.quantidade, p."catalogoId",
              f.modelo AS modelo, m.nome AS marca, vt.tensao::text AS tensao,
              val."validadoEm" AS "validadoEm",
              (p.embedding <=> ${vetorLiteral}::vector) AS distancia
@@ -77,6 +78,7 @@ class PrismaComponenteRepository extends ComponenteRepository {
       codigo: linha.codigo,
       descricao: linha.descricao,
       posicaoVisual: linha.posicaoVisual,
+      quantidade: linha.quantidade ?? null,
       marca: linha.marca,
       modelo: linha.modelo,
       tensao: linha.tensao,

@@ -2,6 +2,7 @@ const { NotFoundError, ValidationError } = require("../../domain/errors/DomainEr
 const { StatusCatalogo } = require("../../domain/enums/StatusCatalogo");
 const { EnumTensao } = require("../../domain/enums/EnumTensao");
 const { TipoAcao } = require("../../domain/enums/TipoAcao");
+const { normalizarQuantidade } = require("../../domain/validators/quantidadePecaValidator");
 
 /**
  * RF09 — fluxo alternativo A3 (Atualização de registro). Edita marca/modelo/
@@ -51,6 +52,7 @@ class AtualizarCatalogoUseCase {
         codigo: peca.codigo.trim(),
         descricao: peca.descricao?.trim() || null,
         posicaoVisual: peca.posicaoVisual.trim(),
+        quantidade: normalizarQuantidade(peca.quantidade).valor,
       })),
     });
 
@@ -103,6 +105,9 @@ class AtualizarCatalogoUseCase {
         }
         if (!peca.posicaoVisual?.trim()) {
           fieldErrors[`pecas.${indice}.posicaoVisual`] = "Informe a posição visual da peça no diagrama.";
+        }
+        if (!normalizarQuantidade(peca.quantidade).valida) {
+          fieldErrors[`pecas.${indice}.quantidade`] = "A quantidade deve ser um número inteiro maior ou igual a 1.";
         }
       });
     }

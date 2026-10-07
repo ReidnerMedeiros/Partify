@@ -11,6 +11,7 @@ class Peca {
     codigo,
     descricao,
     posicaoVisual,
+    quantidade,
     confianca,
     versaoTensaoId,
     catalogoId,
@@ -22,6 +23,7 @@ class Peca {
     this.codigo = codigo;
     this.descricao = descricao ?? null;
     this.posicaoVisual = posicaoVisual ?? null;
+    this.quantidade = quantidade ?? null;
     this.confianca = confianca ?? null;
     this.versaoTensaoId = versaoTensaoId;
     this.catalogoId = catalogoId;

@@ -1,6 +1,7 @@
 const { NotFoundError, ValidationError } = require("../../domain/errors/DomainErrors");
 const { EnumTensao } = require("../../domain/enums/EnumTensao");
 const { TipoAcao } = require("../../domain/enums/TipoAcao");
+const { normalizarQuantidade } = require("../../domain/validators/quantidadePecaValidator");
 
 /**
  * RF08 — fluxo básico ("Validar e Salvar") + A1 (edição, já refletida nos valores
@@ -42,6 +43,7 @@ class ValidarCatalogoUseCase {
         codigo: peca.codigo.trim(),
         descricao: peca.descricao?.trim() || null,
         posicaoVisual: peca.posicaoVisual.trim(),
+        quantidade: normalizarQuantidade(peca.quantidade).valor,
       })),
     });
 
@@ -93,6 +95,9 @@ class ValidarCatalogoUseCase {
         // tecnicamente incompleta, insuficiente para garantir compatibilidade.
         if (!peca.posicaoVisual?.trim()) {
           fieldErrors[`pecas.${indice}.posicaoVisual`] = "Informe a posição visual da peça no diagrama.";
+        }
+        if (!normalizarQuantidade(peca.quantidade).valida) {
+          fieldErrors[`pecas.${indice}.quantidade`] = "A quantidade deve ser um número inteiro maior ou igual a 1.";
         }
       });
     }

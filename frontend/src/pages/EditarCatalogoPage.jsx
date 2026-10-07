@@ -68,13 +68,24 @@ function EditarCatalogoPage() {
   }, [pdfUrl]);
 
   function atualizarPeca(indice, campo, valor) {
-    setPecas((atual) => atual.map((peca, i) => (i === indice ? { ...peca, [campo]: valor } : peca)));
+    setPecas((atual) =>
+      atual.map((peca, i) => {
+        if (i !== indice) return peca;
+        // Ao editar a descrição ou o código, o aviso correspondente deixa de valer.
+        if (campo === "descricao") return { ...peca, descricao: valor, descricaoIncompleta: false };
+        if (campo === "codigo") return { ...peca, codigo: valor, codigoSuspeito: false };
+        return { ...peca, [campo]: valor };
+      })
+    );
     setErroCampos((atual) => ({ ...atual, [`pecas.${indice}.${campo}`]: undefined }));
   }
 
   function adicionarPeca() {
     contadorNovaPeca += 1;
-    setPecas((atual) => [...atual, { id: null, codigo: "", descricao: "", posicaoVisual: "", chaveTemp: `nova-${contadorNovaPeca}` }]);
+    setPecas((atual) => [
+      ...atual,
+      { id: null, codigo: "", descricao: "", posicaoVisual: "", quantidade: "", chaveTemp: `nova-${contadorNovaPeca}` },
+    ]);
   }
 
   function removerPeca(indice) {
@@ -196,6 +207,9 @@ function EditarCatalogoPage() {
                     className={erroCampos[`pecas.${indice}.codigo`] ? "field--invalid" : ""}
                   />
                   {erroCampos[`pecas.${indice}.codigo`] && <p className="field__error">{erroCampos[`pecas.${indice}.codigo`]}</p>}
+                  {peca.codigoSuspeito && (
+                    <p className="field__aviso">Código fora do padrão do documento. Confira se não há outra coluna misturada (como a quantidade).</p>
+                  )}
                 </div>
                 <div className="field">
                   <label htmlFor={`peca-descricao-${indice}`}>Descrição</label>
@@ -204,6 +218,9 @@ function EditarCatalogoPage() {
                     value={peca.descricao ?? ""}
                     onChange={(e) => atualizarPeca(indice, "descricao", e.target.value)}
                   />
+                  {peca.descricaoIncompleta && (
+                    <p className="field__aviso">Descrição possivelmente incompleta. Confira no documento e complete, se necessário.</p>
+                  )}
                 </div>
                 <div className="field field--posicao">
                   <label htmlFor={`peca-posicao-${indice}`}>Posição</label>
@@ -215,6 +232,19 @@ function EditarCatalogoPage() {
                   />
                   {erroCampos[`pecas.${indice}.posicaoVisual`] && (
                     <p className="field__error">{erroCampos[`pecas.${indice}.posicaoVisual`]}</p>
+                  )}
+                </div>
+                <div className="field field--posicao">
+                  <label htmlFor={`peca-quantidade-${indice}`}>Qtd.</label>
+                  <input
+                    id={`peca-quantidade-${indice}`}
+                    inputMode="numeric"
+                    value={peca.quantidade ?? ""}
+                    onChange={(e) => atualizarPeca(indice, "quantidade", e.target.value)}
+                    className={erroCampos[`pecas.${indice}.quantidade`] ? "field--invalid" : ""}
+                  />
+                  {erroCampos[`pecas.${indice}.quantidade`] && (
+                    <p className="field__error">{erroCampos[`pecas.${indice}.quantidade`]}</p>
                   )}
                 </div>
                 <button type="button" className="icon-btn icon-btn--danger" title="Remover peça" onClick={() => removerPeca(indice)}>
