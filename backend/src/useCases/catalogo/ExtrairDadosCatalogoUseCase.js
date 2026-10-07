@@ -2,6 +2,12 @@ const { NotFoundError, ServiceUnavailableError, ValidationError } = require("../
 const { StatusCatalogo } = require("../../domain/enums/StatusCatalogo");
 const { TipoAcao } = require("../../domain/enums/TipoAcao");
 
+const { avaliarDescricaoPeca } = require("../../domain/validators/descricaoPecaValidator");
+
+// Peças cuja descrição parece truncada no próprio documento têm a confiança
+// limitada a este teto, para ficarem fora da faixa "alta" na tela de validação.
+const TETO_CONFIANCA_DESCRICAO_INCOMPLETA = 60;
+
 const MENSAGEM_FORA_DOMINIO =
   "O documento enviado não parece ser uma ferramenta elétrica portátil compatível com o sistema (Bosch, Makita ou DeWalt). Verifique o arquivo e tente novamente.";
 
@@ -89,7 +95,11 @@ class ExtrairDadosCatalogoUseCase {
       marca: extracao.marca,
       modelo: extracao.modelo,
       tensao: extracao.tensao,
-      pecas: extracao.pecas,
+      pecas: extracao.pecas.map((peca) =>
+        avaliarDescricaoPeca(peca.descricao).incompleta
+          ? { ...peca, confianca: Math.min(peca.confianca ?? TETO_CONFIANCA_DESCRICAO_INCOMPLETA, TETO_CONFIANCA_DESCRICAO_INCOMPLETA) }
+          : peca
+      ),
       confiancaCampos: extracao.confiancaCampos,
       confiancaGeral: extracao.confiancaGeral,
       status,

@@ -84,7 +84,13 @@ function ValidarCatalogoPage() {
   }
 
   function atualizarPeca(indice, campo, valor) {
-    setPecas((atual) => atual.map((peca, i) => (i === indice ? { ...peca, [campo]: valor } : peca)));
+    setPecas((atual) =>
+      atual.map((peca, i) => {
+        if (i !== indice) return peca;
+        // Ao editar a descrição, o aviso de "possivelmente incompleta" deixa de valer.
+        return campo === "descricao" ? { ...peca, descricao: valor, descricaoIncompleta: false } : { ...peca, [campo]: valor };
+      })
+    );
     setErroCampos((atual) => ({ ...atual, [`pecas.${indice}.${campo}`]: undefined }));
   }
 
@@ -220,6 +226,9 @@ function ValidarCatalogoPage() {
                     value={peca.descricao ?? ""}
                     onChange={(e) => atualizarPeca(indice, "descricao", e.target.value)}
                   />
+                  {peca.descricaoIncompleta && (
+                    <p className="field__aviso">Descrição possivelmente incompleta. Confira no documento e complete, se necessário.</p>
+                  )}
                 </div>
                 <div className="field field--posicao">
                   <label htmlFor={`peca-posicao-${indice}`}>Posição</label>

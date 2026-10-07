@@ -62,6 +62,12 @@ valor específico está correto e foi lido corretamente — não é uma medida
 genérica, é uma autoavaliação campo a campo do quanto o valor extraído reflete
 fielmente o que está escrito/desenhado no PDF.
 
+DESCRIÇÃO TRUNCADA: alguns catálogos cortam a designação da peça num tamanho fixo
+(ex.: "MANCAL DO", "SUPORTE DE"), de modo que a palavra final nunca aparece no
+documento. Transcreva a descrição EXATAMENTE como está escrita, sem completá-la
+por suposição nem inventar palavras. Quando a designação parecer cortada ou
+incompleta, atribua à confiança daquela peça um valor abaixo de 60.
+
 Se o documento não contiver nenhum padrão técnico reconhecível de vista
 explodida (documento ilegível, corrompido, ou de assunto totalmente diferente),
 defina "documentoCompreendido" como false e devolva os demais campos vazios/nulos.

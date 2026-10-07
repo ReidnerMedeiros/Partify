@@ -110,7 +110,7 @@ function ConsultaTecnicaPage() {
                   <IconChat />
                 </span>
                 <p>
-                  Faça uma pergunta técnica sobre componentes. Ex.: "Qual o induzido correto para a Makita 4100NH 127V?"
+                  Faça uma pergunta técnica sobre componentes. Ex.: &quot;Qual o induzido correto para a Makita 4100NH 127V?&quot;
                 </p>
               </div>
             )}

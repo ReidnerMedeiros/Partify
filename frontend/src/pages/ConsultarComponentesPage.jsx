@@ -169,7 +169,7 @@ function ConsultarComponentesPage() {
 
           {buscou && semRegistrosNaBase && (
             <p className="table-card__estado">
-              Ainda não há componentes validados nesta instância. Importe e valide catálogos técnicos em "Importar Catálogo" antes de
+              Ainda não há componentes validados nesta instância. Importe e valide catálogos técnicos em &quot;Importar Catálogo&quot; antes de
               buscar.
             </p>
           )}

@@ -33,14 +33,7 @@ backend/tests/acuracia-ia/pdfs/
 backend/resultado-testes-api.txt
 backend/tests/pdfs/
 
-# Playwright (E2E, item 5 do plano de testes avançados) — relatórios/artefatos
-# gerados a cada execução local, não são código do projeto.
-e2e/test-results/
-e2e/playwright-report/
-e2e/playwright/.cache/
-# Log do `npm run dev:backend` redirecionado a arquivo (mesmo workaround do
-# resultado-testes-api.txt) — usado pela jornada 3 (recuperação de senha) para
-# ler o link de redefinição impresso pelo ConsoleEmailService.
+# Log do `npm run dev:backend` redirecionado a arquivo (depuração local).
 backend/dev-server.log
 
 # Editores/IDEs
@@ -86,6 +79,7 @@ backend/dev-server.log
 /PLANO_CORRECAO_TESTES.md
 /plano_correcao_testes.md
 /prompts/
+/VISAO_GERAL_PROJETO.md
 
 # Config local do Claude Code (específica desta máquina/usuário)
 .claude/

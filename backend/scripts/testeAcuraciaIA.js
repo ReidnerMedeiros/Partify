@@ -90,7 +90,7 @@ function esperar(ms) {
  * transitório do lado do Google — não indica problema no nosso código.
  * Tenta de novo com espera crescente antes de desistir.
  */
-async function extrairComRetry(extractionService, args, tentativas = 3) {
+async function extrairComRetry(extractionService, args, tentativas = 6) {
   for (let tentativa = 1; tentativa <= tentativas; tentativa += 1) {
     try {
       // eslint-disable-next-line no-await-in-loop
@@ -101,7 +101,7 @@ async function extrairComRetry(extractionService, args, tentativas = 3) {
       if (!ehTransitorio || tentativa === tentativas) {
         throw erro;
       }
-      const esperaMs = tentativa * 5000;
+      const esperaMs = tentativa * 15000;
       console.log(`  (Gemini API indisponível/sobrecarregada — tentativa ${tentativa}/${tentativas}, tentando de novo em ${esperaMs / 1000}s...)`); // eslint-disable-line no-console
       // eslint-disable-next-line no-await-in-loop
       await esperar(esperaMs);
@@ -147,7 +147,8 @@ function imprimirRelatorio(processados) {
   let totalCamposCertos = 0;
   let totalCampos = 0;
 
-  console.log("\n=== Teste de Acurácia da IA — RF07 (meta RNF10: >= 75%) ===\n"); // eslint-disable-line no-console
+  console.log("\n=== Teste de Acurácia da IA — RF07 (meta RNF10: >= 75%) ==="); // eslint-disable-line no-console
+  console.log(`Modelo avaliado: ${process.env.GEMINI_MODEL}\n`); // eslint-disable-line no-console
 
   for (const item of processados) {
     if (item.erro) {
@@ -213,6 +214,7 @@ async function main() {
   const extractionService = new GeminiExtractionService({
     apiKey: process.env.GEMINI_API_KEY,
     model: process.env.GEMINI_MODEL,
+    fallbackModels: process.env.GEMINI_FALLBACK_MODELS,
   });
 
   const arquivosGabarito = fs.readdirSync(PASTA_GABARITOS).filter((f) => f.endsWith(".json"));

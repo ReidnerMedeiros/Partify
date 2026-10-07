@@ -1,4 +1,5 @@
 const { ServiceUnavailableError } = require("../../domain/errors/DomainErrors");
+const { avaliarDescricaoPeca } = require("../../domain/validators/descricaoPecaValidator");
 
 /**
  * Adapta requisições HTTP para os casos de uso do RF06 (Importar Catálogo), RF07
@@ -255,13 +256,19 @@ function apresentarResultado(resultado) {
     marca: resultado.marca,
     modelo: resultado.modelo,
     tensao: resultado.tensao,
-    pecas: resultado.pecas.map((peca) => ({
-      id: peca.id,
-      codigo: peca.codigo,
-      descricao: peca.descricao,
-      posicaoVisual: peca.posicaoVisual,
-      confianca: peca.confianca,
-    })),
+    pecas: resultado.pecas.map((peca) => {
+      const avaliacao = avaliarDescricaoPeca(peca.descricao);
+      return {
+        id: peca.id,
+        codigo: peca.codigo,
+        descricao: peca.descricao,
+        posicaoVisual: peca.posicaoVisual,
+        confianca: peca.confianca,
+        // Sinal para a tela de validação: a designação parece truncada no PDF.
+        descricaoIncompleta: avaliacao.incompleta,
+        motivosDescricaoIncompleta: avaliacao.motivos,
+      };
+    }),
   };
 }
 

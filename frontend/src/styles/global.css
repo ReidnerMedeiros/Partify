@@ -382,6 +382,12 @@ a {
   margin-top: 5px;
 }
 
+.field__aviso {
+  color: #92400e;
+  font-size: 0.76rem;
+  margin-top: 5px;
+}
+
 .content-card--wide {
   max-width: 900px;
 }

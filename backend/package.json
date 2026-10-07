@@ -16,7 +16,6 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "teste:acuracia": "node scripts/testeAcuraciaIA.js",
-    "seed:e2e": "node prisma/seed-e2e.js",
     "lint": "eslint ."
   },
   "dependencies": {
