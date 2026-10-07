@@ -42,6 +42,15 @@ class SupabaseStorageService extends FileStorageService {
     const arrayBuffer = await data.arrayBuffer();
     return Buffer.from(arrayBuffer);
   }
+
+  async excluir(caminhoArquivo) {
+    // O Supabase Storage não devolve erro para caminho inexistente, então a
+    // operação já é idempotente.
+    const { error } = await this.client.storage.from(this.bucket).remove([caminhoArquivo]);
+    if (error) {
+      throw new Error(`Falha ao excluir arquivo do Supabase Storage: ${error.message}`);
+    }
+  }
 }
 
 module.exports = { SupabaseStorageService };

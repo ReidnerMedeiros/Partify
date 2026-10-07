@@ -20,6 +20,15 @@ class FileStorageService {
   async obterBuffer(_caminhoArquivo) {
     throw new Error("FileStorageService.obterBuffer não implementado.");
   }
+
+  /**
+   * Remove um arquivo previamente salvo, a partir do identificador retornado por
+   * salvar(). Deve ser idempotente: excluir um arquivo que não existe mais não
+   * é erro.
+   */
+  async excluir(_caminhoArquivo) {
+    throw new Error("FileStorageService.excluir não implementado.");
+  }
 }
 
 module.exports = { FileStorageService };

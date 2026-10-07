@@ -67,14 +67,15 @@ function formatarData(iso) {
 
 /**
  * RF10 — Manter Documentos Pendentes. Fila dos catálogos IRRESOLUVEL (RF07/A1
- * extração parcial ou E2 documento ilegível) que ainda não chegaram a
- * PENDENTE_VALIDACAO nem VALIDADO. "Preencher" reaproveita a própria tela de
+ * extração parcial ou E2 documento ilegível) e dos PENDENTE_VALIDACAO
+ * (extraídos, mas que o usuário saiu sem salvar), ainda não VALIDADO. A data
+ * de importação aparece em cada cartão. "Preencher" reaproveita a própria tela de
  * validação do RF08 (busca o documento + o PDF por id e navega com esses
  * dados em memória, no mesmo formato que o RF06/07 já usam ao encadear para
  * lá). "Reenviar para IA" reaproveita o endpoint de nova tentativa do RF07/E1
  * (POST /catalogos/:id/extrair) — nenhum backend novo foi necessário para essa
- * ação. "Excluir" remove o documento por completo (RF10/A3, diferente da
- * exclusão de peça do RF09/A4).
+ * ação. "Excluir" remove o documento por completo, inclusive o PDF do
+ * armazenamento (RF10/A3, diferente da exclusão de peça do RF09/A4).
  */
 function DocumentosPendentesPage() {
   const navigate = useNavigate();
@@ -167,7 +168,7 @@ function DocumentosPendentesPage() {
         <div className="content-card content-card--wide">
           <h2>Documentos Pendentes</h2>
           <p className="content-card__subtitle">
-            Documentos que a extração automática (RF07) não conseguiu concluir sozinha.
+            Documentos importados que ainda não foram salvos: a extração não concluiu ou aguardam sua validação.
           </p>
 
           {mensagemErro && <div className="alert alert--error">{mensagemErro}</div>}
@@ -259,7 +260,7 @@ function DocumentosPendentesPage() {
       {confirmacao?.tipo === "excluir" && (
         <ConfirmModal
           titulo="Excluir documento"
-          mensagem={`Deseja realmente excluir "${confirmacao.documento.nomeArquivo}" da fila de pendentes? Esta ação não pode ser desfeita.`}
+          mensagem={`Deseja realmente excluir "${confirmacao.documento.nomeArquivo}" da fila de pendentes? O documento e o PDF serão apagados e esta ação não pode ser desfeita.`}
           confirmando={processandoConfirmacao}
           textoConfirmar="Excluir"
           onConfirmar={confirmarExclusao}

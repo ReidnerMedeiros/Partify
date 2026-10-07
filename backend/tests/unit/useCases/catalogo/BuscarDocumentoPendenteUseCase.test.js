@@ -43,8 +43,7 @@ describe("BuscarDocumentoPendenteUseCase — RF10/A1 (carregamento pra preenchim
     await expect(useCase.execute({ catalogoId: "inexistente", empresaId: EMPRESA_ID })).rejects.toThrow(NotFoundError);
   });
 
-  test("lança NotFoundError quando o catálogo já foi validado", async () => {
-    const { useCase, catalogoRepository } = montarUseCase();
+  async function catalogoComStatus(catalogoRepository, status) {
     const catalogo = await catalogoRepository.criar({ empresaId: EMPRESA_ID, nomeArquivo: "x.pdf", caminhoArquivo: "fake/2.pdf" });
     await catalogoRepository.registrarResultadoExtracao(catalogo.id, EMPRESA_ID, {
       marca: "Makita",
@@ -53,10 +52,26 @@ describe("BuscarDocumentoPendenteUseCase — RF10/A1 (carregamento pra preenchim
       pecas: [{ codigo: "1600A002BH", descricao: "Rolamento", posicaoVisual: "3", confianca: 60 }],
       confiancaCampos: {},
       confiancaGeral: 60,
-      status: "PENDENTE_VALIDACAO",
+      status,
       motivoPendencia: null,
       camposAusentes: null,
     });
+    return catalogo;
+  }
+
+  test("retorna também um documento extraído que aguarda validação (PENDENTE_VALIDACAO)", async () => {
+    const { useCase, catalogoRepository } = montarUseCase();
+    const catalogo = await catalogoComStatus(catalogoRepository, "PENDENTE_VALIDACAO");
+
+    const resultado = await useCase.execute({ catalogoId: catalogo.id, empresaId: EMPRESA_ID });
+
+    expect(resultado.catalogo.status).toBe("PENDENTE_VALIDACAO");
+    expect(resultado.pecas).toHaveLength(1);
+  });
+
+  test("lança NotFoundError quando o catálogo já foi validado", async () => {
+    const { useCase, catalogoRepository } = montarUseCase();
+    const catalogo = await catalogoComStatus(catalogoRepository, "VALIDADO");
 
     await expect(useCase.execute({ catalogoId: catalogo.id, empresaId: EMPRESA_ID })).rejects.toThrow(NotFoundError);
   });

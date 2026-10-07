@@ -30,6 +30,11 @@ class LocalFileStorageService extends FileStorageService {
     const nomeArmazenado = caminhoArquivo.replace(/^local\//, "");
     return fs.readFile(path.join(DIRETORIO_BASE, nomeArmazenado));
   }
+
+  async excluir(caminhoArquivo) {
+    const nomeArmazenado = path.basename(caminhoArquivo.replace(/^local\//, ""));
+    await fs.rm(path.join(DIRETORIO_BASE, nomeArmazenado), { force: true });
+  }
 }
 
 module.exports = { LocalFileStorageService };

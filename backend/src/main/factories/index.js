@@ -212,7 +212,7 @@ const excluirPecaUseCase = new ExcluirPecaUseCase({ catalogoRepository, logAudit
 const baixarArquivoCatalogoUseCase = new BaixarArquivoCatalogoUseCase({ catalogoRepository, fileStorageService });
 const listarDocumentosPendentesUseCase = new ListarDocumentosPendentesUseCase({ catalogoRepository });
 const buscarDocumentoPendenteUseCase = new BuscarDocumentoPendenteUseCase({ catalogoRepository });
-const excluirCatalogoUseCase = new ExcluirCatalogoUseCase({ catalogoRepository, logAuditoriaRepository });
+const excluirCatalogoUseCase = new ExcluirCatalogoUseCase({ catalogoRepository, fileStorageService, logAuditoriaRepository });
 // RF11 — usa a instância própria do Agente de Consulta (embeddingServiceConsulta),
 // separada da do Agente Validador (decisão #25 em CONTEXTO.md).
 const buscarComponentesUseCase = new BuscarComponentesUseCase({

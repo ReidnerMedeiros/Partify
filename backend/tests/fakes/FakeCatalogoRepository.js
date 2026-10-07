@@ -218,7 +218,7 @@ class FakeCatalogoRepository {
 
   async listarPendentes({ empresaId }) {
     return this.catalogos
-      .filter((c) => c.empresaId === empresaId && c.status === "IRRESOLUVEL")
+      .filter((c) => c.empresaId === empresaId && ["IRRESOLUVEL", "PENDENTE_VALIDACAO"].includes(c.status))
       .sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm));
   }
 

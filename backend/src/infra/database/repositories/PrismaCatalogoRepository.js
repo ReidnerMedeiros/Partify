@@ -323,7 +323,7 @@ class PrismaCatalogoRepository extends CatalogoRepository {
 
   async listarPendentes({ empresaId }) {
     const registros = await this.prisma.catalogo.findMany({
-      where: { empresaId, status: "IRRESOLUVEL" },
+      where: { empresaId, status: { in: ["IRRESOLUVEL", "PENDENTE_VALIDACAO"] } },
       orderBy: { criadoEm: "desc" },
     });
     return registros.map(paraEntidadeCatalogo);

@@ -1,5 +1,6 @@
 const { ExcluirCatalogoUseCase } = require("../../../../src/useCases/catalogo/ExcluirCatalogoUseCase");
 const { FakeCatalogoRepository } = require("../../../fakes/FakeCatalogoRepository");
+const { FakeFileStorageService } = require("../../../fakes/FakeFileStorageService");
 const { FakeLogAuditoriaRepository } = require("../../../fakes/FakeLogAuditoriaRepository");
 const { NotFoundError } = require("../../../../src/domain/errors/DomainErrors");
 
@@ -21,11 +22,28 @@ async function montarCatalogoIrresoluvel(catalogoRepository, { pecas = [] } = {}
   return catalogo;
 }
 
+async function montarCatalogoExtraido(catalogoRepository, { status }) {
+  const catalogo = await catalogoRepository.criar({ empresaId: EMPRESA_ID, nomeArquivo: "x.pdf", caminhoArquivo: "fake/2.pdf" });
+  await catalogoRepository.registrarResultadoExtracao(catalogo.id, EMPRESA_ID, {
+    marca: "Makita",
+    modelo: "4100NH",
+    tensao: "V220",
+    pecas: [{ codigo: "1600A002BH", descricao: "Rolamento", posicaoVisual: "3", confianca: 60 }],
+    confiancaCampos: {},
+    confiancaGeral: 60,
+    status,
+    motivoPendencia: null,
+    camposAusentes: null,
+  });
+  return catalogo;
+}
+
 function montarUseCase() {
   const catalogoRepository = new FakeCatalogoRepository();
+  const fileStorageService = new FakeFileStorageService();
   const logAuditoriaRepository = new FakeLogAuditoriaRepository();
-  const useCase = new ExcluirCatalogoUseCase({ catalogoRepository, logAuditoriaRepository });
-  return { useCase, catalogoRepository, logAuditoriaRepository };
+  const useCase = new ExcluirCatalogoUseCase({ catalogoRepository, fileStorageService, logAuditoriaRepository });
+  return { useCase, catalogoRepository, fileStorageService, logAuditoriaRepository };
 }
 
 describe("ExcluirCatalogoUseCase — RF10/A3 (Exclusão do documento)", () => {
@@ -57,24 +75,57 @@ describe("ExcluirCatalogoUseCase — RF10/A3 (Exclusão do documento)", () => {
     ).rejects.toThrow(NotFoundError);
   });
 
+  test("exclui também um catálogo extraído que aguardava validação (PENDENTE_VALIDACAO)", async () => {
+    const { useCase, catalogoRepository } = montarUseCase();
+    const catalogo = await montarCatalogoExtraido(catalogoRepository, { status: "PENDENTE_VALIDACAO" });
+
+    await useCase.execute({ catalogoId: catalogo.id, empresaId: EMPRESA_ID, usuarioId: "usuario-1" });
+
+    expect(catalogoRepository.catalogos.some((c) => c.id === catalogo.id)).toBe(false);
+    expect(catalogoRepository.pecas.some((p) => p.catalogoId === catalogo.id)).toBe(false);
+  });
+
   test("lança NotFoundError quando o catálogo já foi validado (fora do escopo do RF10)", async () => {
     const { useCase, catalogoRepository } = montarUseCase();
-    const catalogo = await catalogoRepository.criar({ empresaId: EMPRESA_ID, nomeArquivo: "x.pdf", caminhoArquivo: "fake/2.pdf" });
-    await catalogoRepository.registrarResultadoExtracao(catalogo.id, EMPRESA_ID, {
-      marca: "Makita",
-      modelo: "4100NH",
-      tensao: "V220",
-      pecas: [{ codigo: "1600A002BH", descricao: "Rolamento", posicaoVisual: "3", confianca: 60 }],
-      confiancaCampos: {},
-      confiancaGeral: 60,
-      status: "PENDENTE_VALIDACAO",
-      motivoPendencia: null,
-      camposAusentes: null,
-    });
+    const catalogo = await montarCatalogoExtraido(catalogoRepository, { status: "VALIDADO" });
 
     await expect(
       useCase.execute({ catalogoId: catalogo.id, empresaId: EMPRESA_ID, usuarioId: "usuario-1" })
     ).rejects.toThrow(NotFoundError);
+    expect(catalogoRepository.catalogos.some((c) => c.id === catalogo.id)).toBe(true);
+  });
+
+  test("remove o PDF do armazenamento junto com o documento", async () => {
+    const { useCase, catalogoRepository, fileStorageService } = montarUseCase();
+    const catalogo = await montarCatalogoIrresoluvel(catalogoRepository);
+    fileStorageService.arquivos.set(catalogo.caminhoArquivo, Buffer.from("pdf"));
+
+    await useCase.execute({ catalogoId: catalogo.id, empresaId: EMPRESA_ID, usuarioId: "usuario-1" });
+
+    expect(fileStorageService.arquivos.has(catalogo.caminhoArquivo)).toBe(false);
+  });
+
+  test("não remove o arquivo de um catálogo que não pôde ser excluído", async () => {
+    const { useCase, catalogoRepository, fileStorageService } = montarUseCase();
+    const catalogo = await montarCatalogoExtraido(catalogoRepository, { status: "VALIDADO" });
+    fileStorageService.arquivos.set(catalogo.caminhoArquivo, Buffer.from("pdf"));
+
+    await expect(
+      useCase.execute({ catalogoId: catalogo.id, empresaId: EMPRESA_ID, usuarioId: "usuario-1" })
+    ).rejects.toThrow(NotFoundError);
+
+    expect(fileStorageService.arquivos.has(catalogo.caminhoArquivo)).toBe(true);
+  });
+
+  test("uma falha ao remover o arquivo não impede a exclusão do documento", async () => {
+    const { useCase, catalogoRepository, fileStorageService, logAuditoriaRepository } = montarUseCase();
+    const catalogo = await montarCatalogoIrresoluvel(catalogoRepository);
+    fileStorageService.deveFalharAoExcluir = true;
+
+    await useCase.execute({ catalogoId: catalogo.id, empresaId: EMPRESA_ID, usuarioId: "usuario-1" });
+
+    expect(catalogoRepository.catalogos.some((c) => c.id === catalogo.id)).toBe(false);
+    expect(logAuditoriaRepository.registros).toHaveLength(1);
   });
 
   test("RNF11: lança NotFoundError quando o catálogo pertence a outra empresa", async () => {

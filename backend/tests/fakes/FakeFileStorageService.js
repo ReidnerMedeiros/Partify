@@ -17,6 +17,13 @@ class FakeFileStorageService {
   async obterBuffer(caminhoArquivo) {
     return this.arquivos.get(caminhoArquivo) ?? null;
   }
+
+  async excluir(caminhoArquivo) {
+    if (this.deveFalharAoExcluir) {
+      throw new Error("falha simulada ao excluir arquivo");
+    }
+    this.arquivos.delete(caminhoArquivo);
+  }
 }
 
 module.exports = { FakeFileStorageService };

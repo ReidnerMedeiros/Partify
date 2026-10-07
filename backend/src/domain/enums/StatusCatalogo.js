@@ -10,4 +10,11 @@ const StatusCatalogo = Object.freeze({
   IRRESOLUVEL: "IRRESOLUVEL",
 });
 
-module.exports = { StatusCatalogo };
+/**
+ * RF10 — status que aparecem na fila de Documentos Pendentes: os que a extração
+ * não conseguiu concluir (IRRESOLUVEL) e os extraídos que o usuário ainda não
+ * validou nem descartou (PENDENTE_VALIDACAO).
+ */
+const STATUS_NA_FILA_DE_PENDENTES = Object.freeze([StatusCatalogo.IRRESOLUVEL, StatusCatalogo.PENDENTE_VALIDACAO]);
+
+module.exports = { StatusCatalogo, STATUS_NA_FILA_DE_PENDENTES };

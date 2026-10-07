@@ -71,9 +71,8 @@ describe("ListarDocumentosPendentesUseCase — RF10 fluxo básico (fila de pende
     expect(documentos[0].situacao).toBe("IRRESOLUVEL");
   });
 
-  test("não lista catálogos PENDENTE_VALIDACAO nem VALIDADO", async () => {
-    const { useCase, catalogoRepository } = montarUseCase();
-    const catalogo = await catalogoRepository.criar({ empresaId: EMPRESA_A, nomeArquivo: "ok.pdf", caminhoArquivo: "fake/ok.pdf" });
+  async function catalogoExtraido(catalogoRepository, { nomeArquivo, status }) {
+    const catalogo = await catalogoRepository.criar({ empresaId: EMPRESA_A, nomeArquivo, caminhoArquivo: `fake/${nomeArquivo}` });
     await catalogoRepository.registrarResultadoExtracao(catalogo.id, EMPRESA_A, {
       marca: "Bosch",
       modelo: "GWS 9-125S",
@@ -81,10 +80,36 @@ describe("ListarDocumentosPendentesUseCase — RF10 fluxo básico (fila de pende
       pecas: [{ codigo: "1600A004GD", descricao: "Induzido", posicaoVisual: "12", confianca: 95 }],
       confiancaCampos: {},
       confiancaGeral: 95,
-      status: "PENDENTE_VALIDACAO",
+      status,
       motivoPendencia: null,
       camposAusentes: null,
     });
+    return catalogo;
+  }
+
+  test("lista como PENDENTE o catálogo extraído que ainda aguarda validação (PENDENTE_VALIDACAO)", async () => {
+    const { useCase, catalogoRepository } = montarUseCase();
+    await catalogoExtraido(catalogoRepository, { nomeArquivo: "ok.pdf", status: "PENDENTE_VALIDACAO" });
+
+    const documentos = await useCase.execute({ empresaId: EMPRESA_A });
+
+    expect(documentos).toHaveLength(1);
+    expect(documentos[0].nomeArquivo).toBe("ok.pdf");
+    expect(documentos[0].situacao).toBe("PENDENTE");
+  });
+
+  test("não lista catálogos já VALIDADO", async () => {
+    const { useCase, catalogoRepository } = montarUseCase();
+    await catalogoExtraido(catalogoRepository, { nomeArquivo: "validado.pdf", status: "VALIDADO" });
+
+    const documentos = await useCase.execute({ empresaId: EMPRESA_A });
+
+    expect(documentos).toHaveLength(0);
+  });
+
+  test("não lista catálogos ainda sem extração (PENDENTE_EXTRACAO)", async () => {
+    const { useCase, catalogoRepository } = montarUseCase();
+    await catalogoRepository.criar({ empresaId: EMPRESA_A, nomeArquivo: "novo.pdf", caminhoArquivo: "fake/novo.pdf" });
 
     const documentos = await useCase.execute({ empresaId: EMPRESA_A });
 
