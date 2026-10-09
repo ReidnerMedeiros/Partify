@@ -37,7 +37,7 @@ function App() {
       <Route
         path="/empresa"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute somenteAdmin>
             <DadosEmpresaPage />
           </ProtectedRoute>
         }
@@ -53,7 +53,7 @@ function App() {
       <Route
         path="/usuarios"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute somenteAdmin>
             <UsuariosPage />
           </ProtectedRoute>
         }
@@ -61,7 +61,7 @@ function App() {
       <Route
         path="/log-sistema"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute somenteAdmin>
             <LogSistemaPage />
           </ProtectedRoute>
         }

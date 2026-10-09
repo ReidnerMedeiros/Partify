@@ -7,9 +7,10 @@ const router = Router();
 // Público — primeiro contato do usuário com o sistema (RF01, fluxo básico)
 router.post("/empresas", asyncHandler(empresaController.cadastrar));
 
-// Autenticado — fluxo alternativo A1 (consulta e atualização)
-router.get("/empresas/me", authMiddleware, asyncHandler(empresaController.consultarMinhaEmpresa));
-router.put("/empresas/me", authMiddleware, asyncHandler(empresaController.atualizarMinhaEmpresa));
+// Autenticado + administrador — fluxo alternativo A1 (consulta e atualização).
+// Dados da empresa não são vistos nem alterados por usuários não administradores.
+router.get("/empresas/me", authMiddleware, exigirAdministrador, asyncHandler(empresaController.consultarMinhaEmpresa));
+router.put("/empresas/me", authMiddleware, exigirAdministrador, asyncHandler(empresaController.atualizarMinhaEmpresa));
 
 // Autenticado + administrador — fluxo alternativo A2 (desativação)
 router.patch(

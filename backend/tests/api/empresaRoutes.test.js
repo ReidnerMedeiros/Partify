@@ -1,6 +1,6 @@
 const request = require("supertest");
 const { prepararApp } = require("./helpers/appDeTeste");
-const { cadastrarEmpresaELogar } = require("./helpers/cenarios");
+const { cadastrarEmpresaELogar, criarUsuarioNaoAdminELogar } = require("./helpers/cenarios");
 
 let app;
 
@@ -85,6 +85,29 @@ describe("GET/PUT /empresas/me — RF01-A1 (autenticado)", () => {
 
     expect(resposta.status).toBe(200);
     expect(resposta.body.empresa.nome).toBe("Nome Atualizado");
+  });
+
+  test("usuário não administrador não vê os dados da empresa (403)", async () => {
+    const { token: tokenAdmin } = await cadastrarEmpresaELogar(app);
+    const { token: tokenTecnico } = await criarUsuarioNaoAdminELogar(app, tokenAdmin);
+
+    const resposta = await request(app).get("/empresas/me").set("Authorization", `Bearer ${tokenTecnico}`);
+
+    expect(resposta.status).toBe(403);
+  });
+
+  test("usuário não administrador não altera os dados da empresa (403) e nada muda", async () => {
+    const { token: tokenAdmin } = await cadastrarEmpresaELogar(app);
+    const { token: tokenTecnico } = await criarUsuarioNaoAdminELogar(app, tokenAdmin);
+
+    const resposta = await request(app)
+      .put("/empresas/me")
+      .set("Authorization", `Bearer ${tokenTecnico}`)
+      .send({ nome: "Invasor", telefone: "(64) 90000-0000", email: "invasor@teste.com" });
+    expect(resposta.status).toBe(403);
+
+    const atual = await request(app).get("/empresas/me").set("Authorization", `Bearer ${tokenAdmin}`);
+    expect(atual.body.empresa.nome).not.toBe("Invasor");
   });
 });
 

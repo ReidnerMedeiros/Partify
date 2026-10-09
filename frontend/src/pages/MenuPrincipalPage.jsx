@@ -93,8 +93,9 @@ function IconLogOut() {
 }
 
 /* Seções do menu. "Gestão de Usuários e Sistema" (RF05 + acesso ao Histórico do
-   Sistema, RF13) é exclusivo do Administrador: para os demais perfis o botão
-   nem aparece (antes ficava só desabilitado, o que revelava sua existência). */
+   Sistema, RF13) e "Dados da Empresa" (RF01) são exclusivos do Administrador:
+   para os demais perfis os botões nem aparecem (antes ficavam só desabilitados,
+   o que revelava sua existência). A seção "Empresa" some quando fica vazia. */
 function montarSecoesMenu(usuario) {
   const ehAdministrador = usuario?.perfil === "ADMINISTRADOR";
 
@@ -119,14 +120,14 @@ function montarSecoesMenu(usuario) {
     {
       chave: "empresa",
       titulo: "Empresa",
-      itens: [
-        ...(ehAdministrador
-          ? [{ chave: "gestao-usuarios-sistema", rotulo: "Gestão de Usuários e Sistema", Icone: IconUsers, rota: "/usuarios" }]
-          : []),
-        { chave: "dados-empresa", rotulo: "Dados da Empresa", Icone: IconBuilding, rota: "/empresa" },
-      ],
+      itens: ehAdministrador
+        ? [
+            { chave: "gestao-usuarios-sistema", rotulo: "Gestão de Usuários e Sistema", Icone: IconUsers, rota: "/usuarios" },
+            { chave: "dados-empresa", rotulo: "Dados da Empresa", Icone: IconBuilding, rota: "/empresa" },
+          ]
+        : [],
     },
-  ];
+  ].filter((secao) => secao.itens.length > 0);
 }
 
 /**
