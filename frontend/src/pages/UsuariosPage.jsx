@@ -173,6 +173,7 @@ function UsuariosPage() {
                             type="button"
                             className="icon-btn"
                             title="Editar"
+                            aria-label={`Editar usuário ${usuario.nome}`}
                             onClick={() => setUsuarioEmEdicao(usuario)}
                           >
                             <IconEdit />

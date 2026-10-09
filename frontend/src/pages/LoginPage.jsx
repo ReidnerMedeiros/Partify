@@ -40,7 +40,6 @@ function LoginPage() {
         <div className="auth-card__logo">
           <PartifyLogo />
         </div>
-        <hr className="auth-card__divider" />
 
         <h1>Bem-vindo</h1>
         <p className="auth-card__subtitle">Faça login para continuar</p>
@@ -51,7 +50,7 @@ function LoginPage() {
         <form onSubmit={aoEnviar} noValidate>
           <Field
             id="login"
-            label="LOGIN"
+            label="Login"
             autoComplete="username"
             autoFocus
             value={valores.login}
@@ -60,7 +59,7 @@ function LoginPage() {
           <Field
             id="senha"
             type="password"
-            label="SENHA"
+            label="Senha"
             autoComplete="current-password"
             value={valores.senha}
             onChange={(e) => setValores((atual) => ({ ...atual, senha: e.target.value }))}

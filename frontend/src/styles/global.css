@@ -4,7 +4,7 @@
   --partify-blue-light: #eef2ff;
   --partify-bg-page: #eef2fb;
   --partify-text: #1f2937;
-  --partify-text-muted: #6b7280;
+  --partify-text-muted: #4b5563;
   --partify-border: #d7deea;
   --partify-danger: #dc2626;
   --partify-danger-bg: #fef2f2;
@@ -12,6 +12,10 @@
   --partify-success-text: #047857;
   --radius: 12px;
   --shadow-card: 0 10px 30px rgba(17, 24, 39, 0.12);
+  /* Intensidade do desenho de peças no fundo (menu e telas de autenticação).
+     Ajuste só aqui se ficar forte ou fraco demais. */
+  --fundo-pecas-opacidade: 0.14;
+  --fundo-pecas-opacidade-auth: 0.35;
 }
 
 * {
@@ -69,12 +73,6 @@ a {
   margin-bottom: 16px;
 }
 
-.auth-card__divider {
-  border: none;
-  border-top: 1px solid var(--partify-border);
-  margin: 0 0 20px;
-}
-
 .auth-card h1 {
   font-size: 1.3rem;
   margin: 0 0 6px;
@@ -89,8 +87,14 @@ a {
 
 .auth-card__forgot {
   text-align: right;
-  margin: -8px 0 16px;
-  font-size: 0.8rem;
+  margin: -8px 0 12px;
+  font-size: 0.85rem;
+}
+
+/* Área de toque maior no link, sem aumentar o texto. */
+.auth-card__forgot a {
+  display: inline-block;
+  padding: 8px 0 8px 12px;
 }
 
 .auth-card__footer {
@@ -98,6 +102,37 @@ a {
   margin-top: 18px;
   font-size: 0.85rem;
   color: var(--partify-text-muted);
+}
+
+/* Fundo decorativo das telas de autenticação: o mesmo desenho de peças do menu,
+   em tons de cinza invertidos (linhas claras) e mesclado ao azul cheio. Fica
+   atrás do cartão e não recebe cliques. Se os arquivos não existirem em
+   public/fundo/, o azul liso continua normalmente. */
+.auth-screen {
+  position: relative;
+  isolation: isolate;
+}
+
+.auth-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("/fundo/fundo-pecas-1280.webp");
+  background-size: cover;
+  background-position: center;
+  /* Linhas azuis viram cinza, o cinza é invertido (fundo branco vira preto, que
+     o "screen" ignora) e o brilho extra deixa as linhas brancas. */
+  filter: grayscale(1) invert(1) brightness(1.5);
+  mix-blend-mode: screen;
+  opacity: var(--fundo-pecas-opacidade-auth);
+}
+
+@media (min-width: 900px) {
+  .auth-screen::before {
+    background-image: url("/fundo/fundo-pecas-2000.webp");
+  }
 }
 
 /* --- Barra superior das telas autenticadas --- */
@@ -120,13 +155,69 @@ a {
   background: rgba(255, 255, 255, 0.15);
   border: none;
   color: #fff;
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  cursor: pointer;
+}
+
+.topbar__back:hover,
+.topbar__usuario:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.topbar__usuario {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 4px 0 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  cursor: pointer;
+}
+
+.topbar__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.topbar__usuario-info {
+  display: none;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+  padding-right: 12px;
+  text-align: left;
+}
+
+.topbar__usuario-nome {
+  font-size: 0.85rem;
+  font-weight: 600;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar__usuario-perfil {
+  font-size: 0.8125rem;
+  opacity: 0.85;
+}
+
+@media (min-width: 640px) {
+  .topbar__usuario-info {
+    display: flex;
+  }
 }
 
 .topbar__logo {
@@ -160,12 +251,12 @@ a {
 
 .topbar__dropdown {
   position: absolute;
-  top: 40px;
+  top: 48px;
   right: 0;
   background: #fff;
   border-radius: 8px;
   box-shadow: var(--shadow-card);
-  min-width: 120px;
+  min-width: 160px;
   overflow: hidden;
   z-index: 20;
 }
@@ -173,11 +264,13 @@ a {
 .topbar__dropdown-item {
   width: 100%;
   text-align: left;
-  padding: 10px 14px;
+  padding: 12px 14px;
+  min-height: 44px;
   background: none;
   border: none;
   color: var(--partify-text);
-  font-size: 0.88rem;
+  font-size: 0.9rem;
+  cursor: pointer;
 }
 
 .topbar__dropdown-item:hover {
@@ -245,13 +338,62 @@ a {
   padding: 20px;
   display: flex;
   flex-direction: column;
+  gap: 18px;
+}
+
+/* Seções do menu (Catálogo, Consulta, Empresa): título pequeno + botões. */
+.menu-secao__titulo {
+  margin: 0 0 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--partify-text-muted);
+}
+
+.menu-secao__itens {
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 10px;
 }
 
-.menu-card__divider {
-  border: none;
-  border-top: 1px solid var(--partify-border);
-  margin: 4px 0;
+@media (min-width: 900px) {
+  .menu-card {
+    max-width: 720px;
+  }
+
+  .menu-secao__itens {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Fundo decorativo do menu: desenho técnico de peças, em azul, mesclado ao fundo
+   da página (multiply faz o branco da imagem desaparecer). Atrás do conteúdo e
+   sem receber cliques. Se os arquivos não existirem em public/fundo/, só o
+   fundo liso aparece. */
+.page-content--fundo-pecas {
+  position: relative;
+  isolation: isolate;
+  background: var(--partify-bg-page);
+}
+
+.page-content--fundo-pecas::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url("/fundo/fundo-pecas-1280.webp");
+  background-size: cover;
+  background-position: center;
+  mix-blend-mode: multiply;
+  opacity: var(--fundo-pecas-opacidade);
+}
+
+@media (min-width: 900px) {
+  .page-content--fundo-pecas::before {
+    background-image: url("/fundo/fundo-pecas-2000.webp");
+  }
 }
 
 .menu-btn {
@@ -259,6 +401,7 @@ a {
   align-items: center;
   gap: 12px;
   width: 100%;
+  min-height: 44px;
   padding: 12px 16px;
   border-radius: 8px;
   font-size: 0.92rem;
@@ -279,6 +422,25 @@ a {
 .menu-btn__icon svg {
   width: 100%;
   height: 100%;
+}
+
+.menu-btn__rotulo {
+  flex: 1;
+}
+
+/* Selo de contagem (ex.: documentos pendentes), pill como os demais badges. */
+.menu-btn__selo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--partify-blue-dark);
+  font-size: 0.8125rem;
+  font-weight: 700;
 }
 
 .menu-btn--primary {
@@ -349,7 +511,7 @@ a {
 
 .field label {
   display: block;
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
   color: var(--partify-text-muted);
   margin-bottom: 6px;
 }
@@ -376,20 +538,55 @@ a {
   border-color: var(--partify-danger);
 }
 
+/* Campo de senha com o botão "Mostrar"/"Ocultar" dentro do campo. */
+.field__input-wrap {
+  position: relative;
+}
+
+.field .field__input--com-acao {
+  padding-right: 78px;
+}
+
+.field__alternar {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  min-height: 36px;
+  padding: 0 10px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--partify-blue);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.field__alternar:hover {
+  background: var(--partify-blue-light);
+}
+
 .field__error {
   color: var(--partify-danger);
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
   margin-top: 5px;
 }
 
 .field__aviso {
   color: #92400e;
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
   margin-top: 5px;
 }
 
 .content-card--wide {
   max-width: 900px;
+}
+
+@media (min-width: 1100px) {
+  .content-card--wide,
+  .consulta-layout {
+    max-width: 1100px;
+  }
 }
 
 /* --- RF05: Manter Usuário (tela de listagem em tabela) --- */
@@ -433,7 +630,7 @@ a {
   background: var(--partify-blue-light);
   color: var(--partify-text-muted);
   font-weight: 600;
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
@@ -447,7 +644,7 @@ a {
   align-items: center;
   padding: 3px 10px;
   border-radius: 999px;
-  font-size: 0.74rem;
+  font-size: 0.8125rem;
   font-weight: 600;
 }
 
@@ -787,7 +984,7 @@ a {
 }
 
 .data-row__label {
-  font-size: 0.76rem;
+  font-size: 0.8125rem;
   color: var(--partify-text-muted);
   margin-bottom: 3px;
 }
@@ -902,6 +1099,25 @@ a {
 .alert--success {
   background: var(--partify-success-bg);
   color: var(--partify-success-text);
+  /* some sozinho após alguns segundos (mensagens de sucesso não precisam ficar) */
+  animation: alerta-some 0.4s ease 7s forwards;
+}
+
+@keyframes alerta-some {
+  to {
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-bottom: 0;
+    overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alert--success {
+    animation-duration: 0.01s;
+  }
 }
 
 .page-loading {
@@ -970,7 +1186,7 @@ a {
 }
 
 .pendente-card__campos-ausentes-rotulo {
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
   color: var(--partify-text-muted);
   margin-right: 2px;
 }
@@ -1025,6 +1241,12 @@ a {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+@media (min-width: 1100px) {
+  .consulta-layout {
+    max-width: 1100px;
+  }
 }
 
 .consulta-acoes {
@@ -1146,7 +1368,7 @@ a {
 }
 
 .fonte-citada__texto {
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
   color: var(--partify-text-muted);
 }
 
@@ -1179,6 +1401,301 @@ a {
 
 .btn--icon .spinner {
   margin-right: 0;
+}
+
+.passos-importacao {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--partify-border);
+  border-radius: 8px;
+  background: var(--partify-blue-light);
+  font-size: 0.86rem;
+  color: var(--partify-text-muted);
+}
+
+.passos-importacao__item {
+  padding: 4px 0 4px 22px;
+  position: relative;
+}
+
+.passos-importacao__item::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 50%;
+  border: 2px solid var(--partify-border);
+}
+
+.passos-importacao__item--feito {
+  color: var(--partify-success-text);
+}
+
+.passos-importacao__item--feito::before {
+  background: var(--partify-success-text);
+  border-color: var(--partify-success-text);
+}
+
+.passos-importacao__item--atual {
+  color: var(--partify-text);
+  font-weight: 600;
+}
+
+.passos-importacao__item--atual::before {
+  background: var(--partify-blue);
+  border-color: var(--partify-blue);
+}
+
+/* Excluir separado das demais ações do cartão (evita clique acidental) */
+.pendente-card__acoes .btn--outline-danger {
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .pendente-card__acoes .btn--outline-danger {
+    margin-left: 0;
+  }
+}
+
+/* --- Fase 5: validação/edição (abas no celular, barra fixa, atenção) --- */
+.abas-mobile {
+  display: none;
+}
+
+.peca-row--atencao {
+  border-color: #d97706;
+  background: #fffbeb;
+}
+
+.form-actions--fixa {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin: 20px -20px -20px;
+  padding: 12px 20px;
+  background: #fff;
+  border-top: 1px solid var(--partify-border);
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
+@media (max-width: 900px) {
+  .abas-mobile {
+    display: flex;
+    background: #fff;
+    border-bottom: 1px solid var(--partify-border);
+  }
+
+  .abas-mobile__aba {
+    flex: 1;
+    min-height: 44px;
+    border: none;
+    border-bottom: 3px solid transparent;
+    background: none;
+    color: var(--partify-text-muted);
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  .abas-mobile__aba--ativa {
+    color: var(--partify-blue);
+    border-bottom-color: var(--partify-blue);
+    font-weight: 600;
+  }
+
+  .split-panel--oculto-mobile {
+    display: none;
+  }
+
+  .page-content--split .split-panel {
+    width: 100%;
+  }
+}
+
+/* --- Fase 4: consultas --- */
+.segmentado {
+  display: inline-flex;
+  border: 1px solid var(--partify-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.segmentado__opcao {
+  min-height: 40px;
+  padding: 0 16px;
+  border: none;
+  background: #fff;
+  color: var(--partify-text);
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.segmentado__opcao + .segmentado__opcao {
+  border-left: 1px solid var(--partify-border);
+}
+
+.segmentado__opcao--ativa {
+  background: var(--partify-blue);
+  color: #fff;
+  font-weight: 600;
+}
+
+.codigo-peca {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.badge--exato {
+  background: var(--partify-blue);
+  color: #fff;
+}
+
+.btn-copiar {
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--partify-border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--partify-text-muted);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.btn-copiar:hover {
+  border-color: var(--partify-blue);
+  color: var(--partify-blue);
+}
+
+.chat-sugestoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.chat-sugestao {
+  padding: 8px 14px;
+  border: 1px solid var(--partify-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--partify-text);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.chat-sugestao:hover {
+  border-color: var(--partify-blue);
+  color: var(--partify-blue);
+}
+
+.chat-digitando {
+  display: flex;
+  gap: 5px;
+  padding: 14px 16px;
+}
+
+.chat-digitando span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--partify-text-muted);
+  animation: chat-pulso 1.2s infinite ease-in-out;
+}
+
+.chat-digitando span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.chat-digitando span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes chat-pulso {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-digitando span {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+/* Tabela vira cartões no celular (cada linha = um cartão) */
+@media (max-width: 640px) {
+  .data-table--cartoes {
+    min-width: 0;
+  }
+
+  .data-table--cartoes thead {
+    display: none;
+  }
+
+  .data-table--cartoes,
+  .data-table--cartoes tbody,
+  .data-table--cartoes tr,
+  .data-table--cartoes td {
+    display: block;
+    width: 100%;
+  }
+
+  .data-table--cartoes tr {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--partify-border);
+  }
+
+  .data-table--cartoes td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 5px 0;
+    border-bottom: none;
+    text-align: right;
+  }
+
+  .data-table--cartoes td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    color: var(--partify-text-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    text-align: left;
+  }
+
+  .consulta-acoes .btn {
+    width: 100%;
+  }
+
+  .segmentado {
+    width: 100%;
+  }
+
+  .segmentado__opcao {
+    flex: 1;
+  }
+
+  .consulta-tecnica-card {
+    height: calc(100vh - 120px);
+  }
+
+  .chat-bolha {
+    max-width: 92%;
+  }
 }
 
 /* --- Responsividade mobile (RNF02 — funcional a partir de 360px) --- */

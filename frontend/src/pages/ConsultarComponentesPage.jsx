@@ -44,6 +44,7 @@ function ConsultarComponentesPage() {
   const [mensagemErro, setMensagemErro] = useState("");
   const [erroCampos, setErroCampos] = useState({});
   const [abrindoId, setAbrindoId] = useState(null);
+  const [copiadoId, setCopiadoId] = useState(null);
 
   async function aoBuscar() {
     setMensagemErro("");
@@ -60,6 +61,16 @@ function ConsultarComponentesPage() {
       setErroCampos(campos);
     } finally {
       setCarregando(false);
+    }
+  }
+
+  async function aoCopiarCodigo(id, codigo) {
+    try {
+      await navigator.clipboard.writeText(codigo);
+      setCopiadoId(id);
+      setTimeout(() => setCopiadoId((atual) => (atual === id ? null : atual)), 1500);
+    } catch {
+      setMensagemErro("Não foi possível copiar o código. Selecione e copie manualmente.");
     }
   }
 
@@ -128,20 +139,22 @@ function ConsultarComponentesPage() {
           </div>
 
           <div className="consulta-acoes">
-            <div className="consulta-modo">
+            <div className="segmentado" role="group" aria-label="Ordenar resultados">
               <button
                 type="button"
-                className={`btn btn--sm ${modo === "semantica" ? "btn--primary" : "btn--outline"}`}
+                className={`segmentado__opcao ${modo === "semantica" ? "segmentado__opcao--ativa" : ""}`}
+                aria-pressed={modo === "semantica"}
                 onClick={() => setModo("semantica")}
               >
-                Busca Semântica
+                Por descrição
               </button>
               <button
                 type="button"
-                className={`btn btn--sm ${modo === "codigo_exato" ? "btn--primary" : "btn--outline"}`}
+                className={`segmentado__opcao ${modo === "codigo_exato" ? "segmentado__opcao--ativa" : ""}`}
+                aria-pressed={modo === "codigo_exato"}
                 onClick={() => setModo("codigo_exato")}
               >
-                Busca por Código Exato
+                Por código
               </button>
             </div>
             <button type="button" className="btn btn--primary" onClick={aoBuscar} disabled={carregando}>
@@ -176,14 +189,14 @@ function ConsultarComponentesPage() {
 
           {buscou && !semRegistrosNaBase && resultados.length === 0 && (
             <p className="table-card__estado">
-              Nenhum componente encontrado para os critérios informados. Tente reformular a busca (a consulta em linguagem natural do
-              RF12 ainda não está disponível).
+              Nenhum componente encontrado para os critérios informados. Tente reformular a busca ou use a Consulta Técnica (IA)
+              para perguntar em linguagem natural.
             </p>
           )}
 
           {buscou && !semRegistrosNaBase && resultados.length > 0 && (
             <div className="table-card">
-              <table className="data-table">
+              <table className="data-table data-table--cartoes">
                 <thead>
                   <tr>
                     <th>Código</th>
@@ -199,20 +212,31 @@ function ConsultarComponentesPage() {
                 <tbody>
                   {resultados.map((item) => (
                     <tr key={item.id}>
-                      <td>
-                        <span className="table-link">{item.codigo}</span>
+                      <td data-label="Código">
+                        <span className="codigo-peca">
+                          <span className="table-link">{item.codigo}</span>
+                          {item.correspondenciaExata && <span className="badge badge--exato">Exato</span>}
+                          <button
+                            type="button"
+                            className="btn-copiar"
+                            onClick={() => aoCopiarCodigo(item.id, item.codigo)}
+                            aria-label={`Copiar código ${item.codigo}`}
+                          >
+                            {copiadoId === item.id ? "Copiado" : "Copiar"}
+                          </button>
+                        </span>
                       </td>
-                      <td>{item.posicaoVisual || "—"}</td>
-                      <td>{item.quantidade ?? "—"}</td>
-                      <td>{item.descricao || "—"}</td>
-                      <td>{item.marca}</td>
-                      <td>
+                      <td data-label="Pos.">{item.posicaoVisual || "—"}</td>
+                      <td data-label="Qtd.">{item.quantidade ?? "—"}</td>
+                      <td data-label="Descrição">{item.descricao || "—"}</td>
+                      <td data-label="Marca">{item.marca}</td>
+                      <td data-label="Modelo">
                         <span className="table-link">{item.modelo}</span>
                       </td>
-                      <td>
+                      <td data-label="Tensão">
                         <span className="badge badge--confianca">{ROTULO_TENSAO[item.tensao] ?? item.tensao}</span>
                       </td>
-                      <td>
+                      <td data-label="Ações">
                         <button
                           type="button"
                           className="btn btn--outline btn--sm"

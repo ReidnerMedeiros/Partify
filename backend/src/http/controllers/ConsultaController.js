@@ -35,6 +35,7 @@ class ConsultaController {
         modelo: item.modelo,
         tensao: item.tensao,
         catalogoId: item.catalogoId,
+        correspondenciaExata: item.correspondenciaExata === true,
       })),
     });
   };

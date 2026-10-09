@@ -124,6 +124,14 @@ function CatalogoPage() {
     carregarCatalogos({ marca, modelo, codigo });
   }
 
+  function aoLimparFiltros() {
+    setMarca("");
+    setModelo("");
+    setCodigo("");
+    setMensagemSucesso("");
+    carregarCatalogos();
+  }
+
   async function aoBaixarPdf(catalogo) {
     setMensagemErro("");
     setBaixandoId(catalogo.id);
@@ -165,7 +173,13 @@ function CatalogoPage() {
           {mensagemErro && <div className="alert alert--error">{mensagemErro}</div>}
           {mensagemSucesso && <div className="alert alert--success">{mensagemSucesso}</div>}
 
-          <div className="filtros-row">
+          <form
+            className="filtros-row"
+            onSubmit={(e) => {
+              e.preventDefault();
+              aoConsultar();
+            }}
+          >
             <div className="field">
               <label htmlFor="filtro-marca">Marca</label>
               <select id="filtro-marca" value={marca} onChange={(e) => setMarca(e.target.value)}>
@@ -185,10 +199,15 @@ function CatalogoPage() {
               <label htmlFor="filtro-codigo">Código da Peça</label>
               <input id="filtro-codigo" placeholder="Ex: 1600A004GD" value={codigo} onChange={(e) => setCodigo(e.target.value)} />
             </div>
-            <button type="button" className="btn btn--primary" onClick={aoConsultar} disabled={carregando}>
+            <button type="submit" className="btn btn--primary" disabled={carregando}>
               Consultar
             </button>
-          </div>
+            {(marca || modelo || codigo) && (
+              <button type="button" className="btn btn--outline" onClick={aoLimparFiltros} disabled={carregando}>
+                Limpar filtros
+              </button>
+            )}
+          </form>
 
           {carregando ? (
             <p className="table-card__estado">Carregando...</p>

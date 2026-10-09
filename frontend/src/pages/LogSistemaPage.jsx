@@ -100,12 +100,6 @@ function LogSistemaPage() {
       <TopBar mostrarVoltar />
 
       <div className="page-content">
-        <div className="page-toolbar">
-          <button type="button" className="btn btn--primary" onClick={() => navigate("/usuarios")}>
-            Voltar para Usuários
-          </button>
-        </div>
-
         <div className="content-card content-card--wide">
           <h2>Histórico do Sistema</h2>
 

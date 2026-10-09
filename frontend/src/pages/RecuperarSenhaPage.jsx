@@ -44,7 +44,6 @@ function RecuperarSenhaPage() {
         <div className="auth-card__logo">
           <PartifyLogo />
         </div>
-        <hr className="auth-card__divider" />
 
         <h1>Recuperar Senha</h1>
         <p className="auth-card__subtitle">
@@ -58,7 +57,7 @@ function RecuperarSenhaPage() {
           <form onSubmit={aoEnviar} noValidate>
             <Field
               id="login"
-              label="LOGIN"
+              label="Login"
               value={valores.login}
               onChange={(e) => setValores((atual) => ({ ...atual, login: e.target.value }))}
             />

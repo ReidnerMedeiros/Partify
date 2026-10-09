@@ -10,6 +10,12 @@ const MENSAGEM_CONTEXTO_INSUFICIENTE =
 const MENSAGEM_SEM_CONTEXTO =
   "Não consegui identificar contexto técnico relevante para essa pergunta. Tente reformular incluindo marca, modelo ou o nome da peça.";
 
+const SUGESTOES = [
+  "Qual o induzido correto para a Makita 4100NH 127V?",
+  "Qual o código do rolamento da Bosch GWS 060?",
+  "Quais peças usam a escova de carvão?",
+];
+
 function IconChat() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -50,9 +56,13 @@ function ConsultaTecnicaPage() {
   const [enviando, setEnviando] = useState(false);
   const [abrindoId, setAbrindoId] = useState(null);
 
-  async function aoEnviar(evento) {
+  function aoEnviar(evento) {
     evento.preventDefault();
-    const perguntaAtual = pergunta.trim();
+    enviarPergunta(pergunta);
+  }
+
+  async function enviarPergunta(texto) {
+    const perguntaAtual = texto.trim();
     if (!perguntaAtual || enviando) return;
 
     const idUsuario = `u-${Date.now()}`;
@@ -98,20 +108,32 @@ function ConsultaTecnicaPage() {
 
       <div className="page-content">
         <div className="content-card content-card--wide consulta-tecnica-card">
-          <h2>Consulta Técnica (IA)</h2>
+          <div className="page-toolbar">
+            <h2>Consulta Técnica (IA)</h2>
+            {mensagens.length > 0 && (
+              <button type="button" className="btn btn--outline btn--sm" onClick={() => setMensagens([])} disabled={enviando}>
+                Limpar conversa
+              </button>
+            )}
+          </div>
           <p className="content-card__subtitle">
             Respostas baseadas exclusivamente nos catálogos técnicos validados desta instância.
           </p>
 
-          <div className="chat-transcricao">
+          <div className="chat-transcricao" aria-live="polite">
             {mensagens.length === 0 && (
               <div className="empty-state">
                 <span className="empty-state__icone">
                   <IconChat />
                 </span>
-                <p>
-                  Faça uma pergunta técnica sobre componentes. Ex.: &quot;Qual o induzido correto para a Makita 4100NH 127V?&quot;
-                </p>
+                <p>Faça uma pergunta técnica sobre componentes. Experimente uma sugestão:</p>
+                <div className="chat-sugestoes">
+                  {SUGESTOES.map((sugestao) => (
+                    <button key={sugestao} type="button" className="chat-sugestao" onClick={() => enviarPergunta(sugestao)}>
+                      {sugestao}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -151,6 +173,14 @@ function ConsultaTecnicaPage() {
                 {mensagem.autor === "ia" && mensagem.situacao === "ERRO" && <p className="chat-bolha__erro">{mensagem.texto}</p>}
               </div>
             ))}
+
+            {enviando && (
+              <div className="chat-bolha chat-bolha--ia chat-digitando" role="status" aria-label="A IA está respondendo">
+                <span />
+                <span />
+                <span />
+              </div>
+            )}
           </div>
 
           <form className="chat-form" onSubmit={aoEnviar}>

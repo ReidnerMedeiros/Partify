@@ -55,7 +55,6 @@ function CadastrarEmpresaPage() {
         <div className="auth-card__logo">
           <PartifyLogo />
         </div>
-        <hr className="auth-card__divider" />
 
         <h1>Cadastrar Empresa</h1>
         <p className="auth-card__subtitle">

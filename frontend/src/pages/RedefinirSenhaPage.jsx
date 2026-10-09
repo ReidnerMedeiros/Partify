@@ -44,7 +44,6 @@ function RedefinirSenhaPage() {
         <div className="auth-card__logo">
           <PartifyLogo />
         </div>
-        <hr className="auth-card__divider" />
 
         <h1>Redefinir Senha</h1>
         <p className="auth-card__subtitle">Defina uma nova senha para acessar sua conta.</p>
@@ -60,7 +59,7 @@ function RedefinirSenhaPage() {
           <Field
             id="novaSenha"
             type="password"
-            label="NOVA SENHA"
+            label="Nova senha"
             value={valores.novaSenha}
             error={erros.novaSenha}
             onChange={(e) => setValores((atual) => ({ ...atual, novaSenha: e.target.value }))}
@@ -68,7 +67,7 @@ function RedefinirSenhaPage() {
           <Field
             id="confirmarNovaSenha"
             type="password"
-            label="CONFIRMAR NOVA SENHA"
+            label="Confirmar nova senha"
             value={valores.confirmarNovaSenha}
             error={erros.confirmarNovaSenha}
             onChange={(e) => setValores((atual) => ({ ...atual, confirmarNovaSenha: e.target.value }))}

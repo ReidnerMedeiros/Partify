@@ -19,6 +19,10 @@ function faixaConfianca(valor) {
   return "baixa";
 }
 
+function pecaPrecisaAtencao(peca) {
+  return Boolean(peca.codigoSuspeito || peca.descricaoIncompleta || (typeof peca.confianca === "number" && peca.confianca < 50));
+}
+
 function BarraConfianca({ valor }) {
   const faixa = faixaConfianca(valor);
   if (faixa === null) return null;
@@ -64,6 +68,7 @@ function ValidarCatalogoPage() {
   const [salvando, setSalvando] = useState(false);
   const [confirmandoCancelamento, setConfirmandoCancelamento] = useState(false);
   const [salvo, setSalvo] = useState(false);
+  const [aba, setAba] = useState("dados");
 
   const confiancaCampos = resultadoInicial?.confiancaCampos ?? {};
   const confiancaGeral = resultadoInicial?.confiancaGeral;
@@ -82,6 +87,8 @@ function ValidarCatalogoPage() {
   if (!resultadoInicial) {
     return null;
   }
+
+  const totalAtencao = pecas.filter(pecaPrecisaAtencao).length;
 
   function atualizarPeca(indice, campo, valor) {
     setPecas((atual) =>
@@ -156,8 +163,17 @@ function ValidarCatalogoPage() {
     <>
       <TopBar mostrarVoltar />
 
+      <div className="abas-mobile" role="tablist" aria-label="Seções da validação">
+        <button type="button" role="tab" aria-selected={aba === "dados"} className={`abas-mobile__aba ${aba === "dados" ? "abas-mobile__aba--ativa" : ""}`} onClick={() => setAba("dados")}>
+          Dados
+        </button>
+        <button type="button" role="tab" aria-selected={aba === "documento"} className={`abas-mobile__aba ${aba === "documento" ? "abas-mobile__aba--ativa" : ""}`} onClick={() => setAba("documento")}>
+          Documento
+        </button>
+      </div>
+
       <div className="page-content page-content--split">
-        <div className="split-panel split-panel--documento">
+        <div className={`split-panel split-panel--documento ${aba !== "documento" ? "split-panel--oculto-mobile" : ""}`}>
           <h3>Documento Original</h3>
           <div className="pdf-preview">
             {pdfUrl ? (
@@ -168,7 +184,7 @@ function ValidarCatalogoPage() {
           </div>
         </div>
 
-        <div className="split-panel split-panel--dados">
+        <div className={`split-panel split-panel--dados ${aba !== "dados" ? "split-panel--oculto-mobile" : ""}`}>
           <div className="split-panel__cabecalho">
             <h3>Dados Extraídos</h3>
             {typeof confiancaGeral === "number" && <span className="badge badge--confianca">{confiancaGeral}% confiança geral</span>}
@@ -176,6 +192,12 @@ function ValidarCatalogoPage() {
 
           {mensagemErro && <div className="alert alert--error">{mensagemErro}</div>}
           {resultadoInicial.motivoPendencia && <div className="alert alert--aviso">{resultadoInicial.motivoPendencia}</div>}
+          {totalAtencao > 0 && (
+            <div className="alert alert--aviso" role="status">
+              {totalAtencao === 1 ? "1 peça precisa de atenção" : `${totalAtencao} peças precisam de atenção`} (código fora do padrão,
+              descrição possivelmente incompleta ou baixa confiança). Elas estão marcadas abaixo.
+            </div>
+          )}
 
           <div className="field">
             <label htmlFor="marca">Marca</label>
@@ -209,7 +231,7 @@ function ValidarCatalogoPage() {
           {erroCampos.pecas && <p className="field__error">{erroCampos.pecas}</p>}
 
           {pecas.map((peca, indice) => (
-            <div className="peca-row" key={peca.id ?? peca.chaveTemp ?? indice}>
+            <div className={`peca-row ${pecaPrecisaAtencao(peca) ? "peca-row--atencao" : ""}`} key={peca.id ?? peca.chaveTemp ?? indice}>
               <div className="peca-row__campos">
                 <div className="field">
                   <label htmlFor={`peca-codigo-${indice}`}>Código</label>
@@ -256,7 +278,7 @@ function ValidarCatalogoPage() {
                     <p className="field__error">{erroCampos[`pecas.${indice}.quantidade`]}</p>
                   )}
                 </div>
-                <button type="button" className="icon-btn icon-btn--danger" title="Remover peça" onClick={() => removerPeca(indice)}>
+                <button type="button" className="icon-btn icon-btn--danger" title="Remover peça" aria-label="Remover peça" onClick={() => removerPeca(indice)}>
                   ×
                 </button>
               </div>
@@ -268,7 +290,7 @@ function ValidarCatalogoPage() {
             + Adicionar peça
           </button>
 
-          <div className="form-actions">
+          <div className="form-actions form-actions--fixa">
             <button type="button" className="btn btn--outline" onClick={() => setConfirmandoCancelamento(true)} disabled={salvando}>
               Cancelar
             </button>

@@ -39,6 +39,7 @@ function VisualizarCatalogoPage() {
   const [catalogo, setCatalogo] = useState(null);
   const [mensagemErro, setMensagemErro] = useState("");
   const [abrindoPdf, setAbrindoPdf] = useState(false);
+  const [busca, setBusca] = useState("");
 
   const [pecaParaExcluir, setPecaParaExcluir] = useState(null);
   const [excluindo, setExcluindo] = useState(false);
@@ -87,6 +88,10 @@ function VisualizarCatalogoPage() {
   }
 
   const pecas = catalogo?.pecas ?? [];
+  const termoBusca = busca.trim().toLowerCase();
+  const pecasFiltradas = termoBusca
+    ? pecas.filter((p) => `${p.codigo} ${p.descricao ?? ""}`.toLowerCase().includes(termoBusca))
+    : pecas;
 
   return (
     <>
@@ -117,11 +122,26 @@ function VisualizarCatalogoPage() {
                 </button>
               </div>
 
+              {pecas.length > 0 && (
+                <div className="field">
+                  <label htmlFor="busca-pecas">Buscar nas peças deste catálogo</label>
+                  <input
+                    id="busca-pecas"
+                    type="search"
+                    placeholder="Código ou descrição"
+                    value={busca}
+                    onChange={(e) => setBusca(e.target.value)}
+                  />
+                </div>
+              )}
+
               <div className="table-card">
                 {pecas.length === 0 ? (
                   <p className="table-card__estado">Este catálogo não tem peças.</p>
+                ) : pecasFiltradas.length === 0 ? (
+                  <p className="table-card__estado">Nenhuma peça corresponde à busca.</p>
                 ) : (
-                  <table className="data-table">
+                  <table className="data-table data-table--cartoes">
                     <thead>
                       <tr>
                         <th>Pos.</th>
@@ -132,14 +152,14 @@ function VisualizarCatalogoPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {pecas.map((peca) => (
+                      {pecasFiltradas.map((peca) => (
                         <tr key={peca.id}>
-                          <td>{peca.posicaoVisual ?? "—"}</td>
-                          <td>
+                          <td data-label="Pos.">{peca.posicaoVisual ?? "—"}</td>
+                          <td data-label="Código">
                             <span className="table-link">{peca.codigo}</span>
                           </td>
-                          <td>{peca.quantidade ?? "—"}</td>
-                          <td>
+                          <td data-label="Qtd.">{peca.quantidade ?? "—"}</td>
+                          <td data-label="Descrição">
                             {peca.descricao || "—"}
                             {peca.descricaoIncompleta && (
                               <span className="badge badge--campo-ausente" title="A descrição pode estar truncada no PDF original">
@@ -147,12 +167,13 @@ function VisualizarCatalogoPage() {
                               </span>
                             )}
                           </td>
-                          <td>
+                          <td data-label="Ações">
                             <div className="table-actions">
                               <button
                                 type="button"
                                 className="icon-btn icon-btn--danger"
                                 title="Excluir peça"
+                                aria-label={`Excluir peça ${peca.codigo}`}
                                 onClick={() => setPecaParaExcluir(peca)}
                               >
                                 <IconTrash />

@@ -1,8 +1,10 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "../components/TopBar.jsx";
 import { importarCatalogo, reextrairCatalogo } from "../services/catalogoService.js";
 import { extrairErroApi } from "../services/api.js";
+
+const PASSOS = ["Enviando o arquivo", "Lendo o documento", "Extraindo as peças com a IA", "Conferindo os dados"];
 
 function IconUpload() {
   return (
@@ -30,9 +32,21 @@ function ImportarCatalogoPage() {
   const [marca, setMarca] = useState("");
   const [modelo, setModelo] = useState("");
   const [processando, setProcessando] = useState(false);
+  const [passoAtual, setPassoAtual] = useState(0);
   const [mensagemErro, setMensagemErro] = useState("");
   const [erroCampos, setErroCampos] = useState({});
   const [catalogoPendenteRetentativa, setCatalogoPendenteRetentativa] = useState(null);
+
+  // Indicativo de andamento: o backend responde em uma única chamada, então os
+  // passos avançam por tempo estimado (o último fica ativo até a resposta chegar).
+  useEffect(() => {
+    if (!processando) {
+      setPassoAtual(0);
+      return undefined;
+    }
+    const temporizador = setInterval(() => setPassoAtual((atual) => Math.min(atual + 1, PASSOS.length - 1)), 6000);
+    return () => clearInterval(temporizador);
+  }, [processando]);
 
   function selecionarArquivo(arquivoSelecionado) {
     setMensagemErro("");
@@ -152,11 +166,36 @@ function ImportarCatalogoPage() {
             Informar marca e modelo ajuda a IA a identificar as peças com maior precisão.
           </p>
 
+          {!processando && (
+            <p className="content-card__subtitle">
+              Use catálogos de peças em PDF com vista explodida e tabela de códigos (ex.: Bosch, Makita, DeWalt).
+            </p>
+          )}
+
+          {processando && (
+            <ol className="passos-importacao" aria-live="polite">
+              {PASSOS.map((passo, indice) => (
+                <li
+                  key={passo}
+                  className={
+                    indice < passoAtual
+                      ? "passos-importacao__item passos-importacao__item--feito"
+                      : indice === passoAtual
+                        ? "passos-importacao__item passos-importacao__item--atual"
+                        : "passos-importacao__item"
+                  }
+                >
+                  {passo}
+                </li>
+              ))}
+            </ol>
+          )}
+
           <button type="button" className="btn btn--primary btn--block" onClick={aoImportar} disabled={!arquivo || processando}>
             {processando ? (
               <>
                 <span className="spinner" role="status" aria-label="Processando" />
-                Processando documento... isso pode levar alguns instantes
+                Processando... isso pode levar alguns instantes
               </>
             ) : (
               "Importar e Extrair"

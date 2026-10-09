@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "../components/TopBar.jsx";
 import ConfirmModal from "../components/ConfirmModal.jsx";
 import { logout, obterUsuario } from "../services/authService.js";
+import { listarDocumentosPendentes } from "../services/catalogoService.js";
 
 /* Ícones em SVG inline (sem dependência externa) — mesmo estilo de traço fino
    usado no protótipo. */
@@ -91,38 +92,40 @@ function IconLogOut() {
   );
 }
 
-/* Itens do menu. "Gestão de Usuários e Sistema" (RF05 + acesso ao Log do
+/* Seções do menu. "Gestão de Usuários e Sistema" (RF05 + acesso ao Histórico do
    Sistema, RF13) é exclusivo do Administrador: para os demais perfis o botão
-   nem aparece (antes ficava só desabilitado, o que revelava sua existência).
-   Quando ele some, o divisor que vinha depois dele passa para o item anterior
-   para o menu manter a mesma separação visual. */
-function montarItensMenu(usuario) {
+   nem aparece (antes ficava só desabilitado, o que revelava sua existência). */
+function montarSecoesMenu(usuario) {
   const ehAdministrador = usuario?.perfil === "ADMINISTRADOR";
 
   return [
-    { chave: "importar-catalogo", rotulo: "Importar Catálogo", Icone: IconUpload, rota: "/catalogos/importar" },
-    { chave: "consultar-componentes", rotulo: "Consultar Componentes", Icone: IconSearch, rota: "/componentes" },
-    { chave: "consulta-tecnica-ia", rotulo: "Consulta Técnica (IA)", Icone: IconChat, rota: "/consulta-tecnica", divisorApos: true },
-    { chave: "documentos-pendentes", rotulo: "Documentos Pendentes", Icone: IconClock, rota: "/catalogos/pendentes" },
     {
-      chave: "consultar-catalogos",
-      rotulo: "Consultar Catálogos",
-      Icone: IconList,
-      rota: "/catalogos",
-      divisorApos: !ehAdministrador,
+      chave: "catalogo",
+      titulo: "Catálogo",
+      itens: [
+        { chave: "importar-catalogo", rotulo: "Importar Catálogo", Icone: IconUpload, rota: "/catalogos/importar" },
+        { chave: "documentos-pendentes", rotulo: "Documentos Pendentes", Icone: IconClock, rota: "/catalogos/pendentes", comSelo: true },
+        { chave: "consultar-catalogos", rotulo: "Consultar Catálogos", Icone: IconList, rota: "/catalogos" },
+      ],
     },
-    ...(ehAdministrador
-      ? [
-          {
-            chave: "gestao-usuarios-sistema",
-            rotulo: "Gestão de Usuários e Sistema",
-            Icone: IconUsers,
-            rota: "/usuarios",
-            divisorApos: true,
-          },
-        ]
-      : []),
-    { chave: "dados-empresa", rotulo: "Dados da Empresa", Icone: IconBuilding, rota: "/empresa", divisorApos: true },
+    {
+      chave: "consulta",
+      titulo: "Consulta",
+      itens: [
+        { chave: "consultar-componentes", rotulo: "Consultar Componentes", Icone: IconSearch, rota: "/componentes" },
+        { chave: "consulta-tecnica-ia", rotulo: "Consulta Técnica (IA)", Icone: IconChat, rota: "/consulta-tecnica" },
+      ],
+    },
+    {
+      chave: "empresa",
+      titulo: "Empresa",
+      itens: [
+        ...(ehAdministrador
+          ? [{ chave: "gestao-usuarios-sistema", rotulo: "Gestão de Usuários e Sistema", Icone: IconUsers, rota: "/usuarios" }]
+          : []),
+        { chave: "dados-empresa", rotulo: "Dados da Empresa", Icone: IconBuilding, rota: "/empresa" },
+      ],
+    },
   ];
 }
 
@@ -135,7 +138,22 @@ function MenuPrincipalPage() {
   const navigate = useNavigate();
   const [confirmandoSaida, setConfirmandoSaida] = useState(false);
   const [saindo, setSaindo] = useState(false);
-  const itensMenu = montarItensMenu(obterUsuario());
+  const [totalPendentes, setTotalPendentes] = useState(0);
+  const secoesMenu = montarSecoesMenu(obterUsuario());
+
+  // Selo com a quantidade de documentos na fila de pendentes. É só um aviso: se
+  // a consulta falhar, o botão aparece normalmente, sem selo.
+  useEffect(() => {
+    let cancelado = false;
+    listarDocumentosPendentes()
+      .then((documentos) => {
+        if (!cancelado) setTotalPendentes(documentos.length);
+      })
+      .catch(() => {});
+    return () => {
+      cancelado = true;
+    };
+  }, []);
 
   function pedirConfirmacaoSaida() {
     setConfirmandoSaida(true);
@@ -159,27 +177,32 @@ function MenuPrincipalPage() {
   return (
     <>
       <TopBar mostrarVoltar={false} />
-      <div className="page-content">
+      <div className="page-content page-content--fundo-pecas">
         <div className="menu-card">
           <div className="menu-card__header">Menu Principal</div>
 
           <div className="menu-card__body">
-            {itensMenu.map((item) => (
-              <div key={item.chave}>
-                <button
-                  type="button"
-                  className="menu-btn menu-btn--primary"
-                  disabled={!item.rota}
-                  title={!item.rota ? "Em breve" : undefined}
-                  onClick={item.rota ? () => navigate(item.rota) : undefined}
-                >
-                  <span className="menu-btn__icon">
-                    <item.Icone />
-                  </span>
-                  {item.rotulo}
-                </button>
-                {item.divisorApos && <hr className="menu-card__divider" />}
-              </div>
+            {secoesMenu.map((secao) => (
+              <section key={secao.chave} className="menu-secao" aria-labelledby={`menu-secao-${secao.chave}`}>
+                <h3 id={`menu-secao-${secao.chave}`} className="menu-secao__titulo">
+                  {secao.titulo}
+                </h3>
+                <div className="menu-secao__itens">
+                  {secao.itens.map((item) => (
+                    <button key={item.chave} type="button" className="menu-btn menu-btn--primary" onClick={() => navigate(item.rota)}>
+                      <span className="menu-btn__icon">
+                        <item.Icone />
+                      </span>
+                      <span className="menu-btn__rotulo">{item.rotulo}</span>
+                      {item.comSelo && totalPendentes > 0 && (
+                        <span className="menu-btn__selo" aria-label={`${totalPendentes} documentos pendentes`}>
+                          {totalPendentes}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </section>
             ))}
 
             <button type="button" className="menu-btn menu-btn--danger-outline" onClick={pedirConfirmacaoSaida}>
