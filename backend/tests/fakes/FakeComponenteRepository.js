@@ -76,11 +76,44 @@ class FakeComponenteRepository {
       .map(paraComponente);
   }
 
-  async buscarPorSimilaridadeSemantica({ empresaId, vetor, marca, tensao, limite = 20 }) {
+  async buscarPorPalavrasChave({ empresaId, palavras, modelos, limite = 20 }) {
+    const semAcento = (texto) => texto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
+    return this.registros
+      .filter((r) => r.empresaId === empresaId && r.status === "VALIDADO")
+      .filter((r) => !modelos?.length || modelos.includes(r.modelo))
+      .map((r) => ({
+        registro: r,
+        pontos: (palavras ?? []).filter((palavra) => semAcento(r.descricao ?? "").includes(palavra)).length,
+      }))
+      .filter((item) => item.pontos > 0)
+      .sort((a, b) => b.pontos - a.pontos || a.registro.codigo.localeCompare(b.registro.codigo))
+      .slice(0, limite)
+      .map((item) => ({ ...paraComponenteComValidacao(item.registro), distancia: null }));
+  }
+
+  async listarPecasDoModelo({ empresaId, modelos, limite = 100 }) {
+    if (!modelos?.length) return [];
+    return this.registros
+      .filter((r) => r.empresaId === empresaId && r.status === "VALIDADO" && modelos.includes(r.modelo))
+      .slice(0, limite)
+      .map((r) => ({ ...paraComponenteComValidacao(r), distancia: null }));
+  }
+
+  async listarModelosValidados({ empresaId }) {
+    const unicos = new Map();
+    for (const r of this.registros) {
+      if (r.empresaId === empresaId && r.status === "VALIDADO") unicos.set(`${r.marca}|${r.modelo}`, { marca: r.marca, modelo: r.modelo });
+    }
+    return [...unicos.values()];
+  }
+
+  async buscarPorSimilaridadeSemantica({ empresaId, vetor, marca, tensao, modelos, limite = 20 }) {
     return this.registros
       .filter((r) => r.empresaId === empresaId && r.status === "VALIDADO" && r.embedding)
       .filter((r) => !marca || r.marca === marca)
       .filter((r) => !tensao || r.tensao === tensao)
+      .filter((r) => !modelos?.length || modelos.includes(r.modelo))
       .map((r) => ({ ...paraComponenteComValidacao(r), distancia: distancia(r.embedding, vetor) }))
       .sort((a, b) => a.distancia - b.distancia)
       .slice(0, limite);

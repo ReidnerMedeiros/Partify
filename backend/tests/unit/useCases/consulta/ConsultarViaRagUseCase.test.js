@@ -109,10 +109,231 @@ describe("ConsultarViaRagUseCase — RF12 (Agente de Consulta, RAG)", () => {
       // sem embedding
     });
 
-    const resultado = await useCase.execute({ empresaId: EMPRESA_A, pergunta: "Qual o código do motor?" });
+    // Pergunta só com palavras genéricas: sem palavra-chave nem embedding que recupere peça.
+    const resultado = await useCase.execute({ empresaId: EMPRESA_A, pergunta: "Qual o código da peça?" });
 
     expect(resultado).toEqual({ situacao: "SEM_CONTEXTO_RELEVANTE", resposta: null, fonte: null });
     expect(ragService.chamadas).toHaveLength(0);
+  });
+
+  describe("recuperação por modelo e palavra-chave (decisão #53)", () => {
+    function semearGbm13(componenteRepository) {
+      const base = { empresaId: EMPRESA_A, marca: "Bosch", modelo: "GBM 13", tensao: "V127", catalogoId: "cat-gbm" };
+      componenteRepository.seedComponente({ ...base, codigo: "R1", descricao: "Rolamento de esferas", quantidade: 1, embedding: [1, 0, 0] });
+      componenteRepository.seedComponente({ ...base, codigo: "R2", descricao: "ROLAMENTO AGULHAS", quantidade: 2, embedding: [2, 0, 0] });
+      componenteRepository.seedComponente({ ...base, codigo: "I1", descricao: "Induzido", embedding: [3, 0, 0] });
+      componenteRepository.seedComponente({
+        empresaId: EMPRESA_A,
+        marca: "Makita",
+        modelo: "4100NH",
+        tensao: "V127",
+        codigo: "R9",
+        descricao: "Rolamento 6001",
+        embedding: [4, 0, 0],
+      });
+    }
+
+    test("restringe o contexto ao modelo citado na pergunta (ignora o mesmo assunto em outro modelo)", async () => {
+      const { useCase, componenteRepository, ragService } = montarUseCase();
+      semearGbm13(componenteRepository);
+
+      await useCase.execute({ empresaId: EMPRESA_A, pergunta: "quantos rolamentos tem a GBM 13" });
+
+      const codigos = ragService.chamadas[0].contexto.map((p) => p.codigo);
+      expect(codigos).toEqual(expect.arrayContaining(["R1", "R2", "I1"]));
+      expect(codigos).not.toContain("R9");
+    });
+
+    test("reconhece o modelo escrito sem espaço ou com hífen e sem diferenciar maiúsculas", async () => {
+      const { useCase, componenteRepository, ragService } = montarUseCase();
+      semearGbm13(componenteRepository);
+
+      await useCase.execute({ empresaId: EMPRESA_A, pergunta: "qual o induzido da gbm-13?" });
+
+      expect(ragService.chamadas[0].contexto.map((p) => p.codigo)).not.toContain("R9");
+    });
+
+    test("palavra-chave traz a peça mesmo sem embedding e vem antes da semântica", async () => {
+      const { useCase, componenteRepository, ragService } = montarUseCase();
+      componenteRepository.seedComponente({
+        empresaId: EMPRESA_A,
+        marca: "Bosch",
+        modelo: "GWS 9-125S",
+        tensao: "V127",
+        codigo: "SEM-EMB",
+        descricao: "Rolamento 608",
+        // sem embedding
+      });
+      componenteRepository.seedComponente({
+        empresaId: EMPRESA_A,
+        marca: "Bosch",
+        modelo: "GWS 9-125S",
+        tensao: "V127",
+        codigo: "COM-EMB",
+        descricao: "Carcaça",
+        embedding: [1, 0, 0],
+      });
+
+      await useCase.execute({ empresaId: EMPRESA_A, pergunta: "preciso do rolamento" });
+
+      expect(ragService.chamadas[0].contexto.map((p) => p.codigo)).toEqual(["SEM-EMB", "COM-EMB"]);
+    });
+
+    test("com modelo identificado e catálogo pequeno, manda o catálogo inteiro e avisa que a listagem é completa", async () => {
+      const { useCase, componenteRepository, ragService } = montarUseCase();
+      semearGbm13(componenteRepository);
+
+      await useCase.execute({ empresaId: EMPRESA_A, pergunta: "quantos rolamentos tem a GBM 13" });
+
+      expect(ragService.chamadas[0].listagemCompleta).toEqual({ modelos: ["GBM 13"] });
+      expect(ragService.chamadas[0].contexto).toHaveLength(3);
+    });
+
+    test("pergunta conceitual ('peça que gira') leva o catálogo inteiro, inclusive peças sem embedding e sem a palavra", async () => {
+      const { useCase, componenteRepository, ragService } = montarUseCase();
+      semearGbm13(componenteRepository);
+      componenteRepository.seedComponente({
+        empresaId: EMPRESA_A,
+        marca: "Bosch",
+        modelo: "GBM 13",
+        tensao: "V127",
+        codigo: "E1",
+        descricao: "Engrenagem",
+        // sem embedding
+      });
+
+      await useCase.execute({ empresaId: EMPRESA_A, pergunta: "qual a peça que gira dentro da gbm 13" });
+
+      expect(ragService.chamadas[0].contexto.map((p) => p.codigo)).toEqual(expect.arrayContaining(["R1", "R2", "I1", "E1"]));
+    });
+
+    test("catálogo grande demais para o contexto: manda 80 peças e só garante completude para os termos buscados", async () => {
+      const { useCase, componenteRepository, ragService } = montarUseCase();
+      for (let i = 0; i < 85; i += 1) {
+        componenteRepository.seedComponente({
+          empresaId: EMPRESA_A,
+          marca: "Bosch",
+          modelo: "GBM 13",
+          tensao: "V127",
+          codigo: `G${String(i).padStart(3, "0")}`,
+          descricao: i < 3 ? "Rolamento" : "Parafuso",
+          embedding: [i, 0, 0],
+        });
+      }
+
+      await useCase.execute({ empresaId: EMPRESA_A, pergunta: "quantos rolamentos tem a GBM 13" });
+
+      const chamada = ragService.chamadas[0];
+      expect(chamada.contexto).toHaveLength(80);
+      expect(chamada.listagemCompleta).toEqual({ modelos: ["GBM 13"], palavras: ["rolamento"] });
+    });
+
+    test("'dessa ferramenta' usa o modelo da pergunta anterior reenviado pelo frontend", async () => {
+      const { useCase, componenteRepository, ragService } = montarUseCase();
+      semearGbm13(componenteRepository);
+
+      const resultado = await useCase.execute({
+        empresaId: EMPRESA_A,
+        pergunta: "quais as peças que compõem o motor dessa ferramenta?",
+        modeloAnterior: "GBM 13",
+      });
+
+      expect(ragService.chamadas[0].contexto.map((p) => p.codigo)).not.toContain("R9");
+      expect(resultado.modeloIdentificado).toBe("GBM 13");
+    });
+
+    test("modelo anterior é ignorado quando a pergunta não faz referência a ele ou o modelo não existe", async () => {
+      const { useCase, componenteRepository, ragService } = montarUseCase();
+      semearGbm13(componenteRepository);
+
+      await useCase.execute({ empresaId: EMPRESA_A, pergunta: "qual o rolamento 6001?", modeloAnterior: "GBM 13" });
+      expect(ragService.chamadas[0].contexto.map((p) => p.codigo)).toContain("R9");
+
+      await useCase.execute({ empresaId: EMPRESA_A, pergunta: "peças dessa ferramenta", modeloAnterior: "MODELO-INEXISTENTE" });
+      expect(ragService.chamadas[1].listagemCompleta).toBeNull();
+    });
+
+    test("resposta com várias peças devolve todas as fontes válidas e ignora ids que não estavam no contexto", async () => {
+      const { useCase, componenteRepository, ragService } = montarUseCase();
+      const r1 = componenteRepository.seedComponente({
+        empresaId: EMPRESA_A,
+        marca: "Bosch",
+        modelo: "GBM 13",
+        tensao: "V127",
+        codigo: "R1",
+        descricao: "Rolamento",
+        embedding: [1, 0, 0],
+      });
+      const i1 = componenteRepository.seedComponente({
+        empresaId: EMPRESA_A,
+        marca: "Bosch",
+        modelo: "GBM 13",
+        tensao: "V127",
+        codigo: "I1",
+        descricao: "Induzido",
+        embedding: [2, 0, 0],
+      });
+      ragService.proximaResposta = {
+        situacao: "RESPONDIDO",
+        resposta: "Pelas descrições do catálogo, giram o induzido e o rolamento.",
+        pecaCitadaId: i1.id,
+        pecasCitadasIds: [i1.id, r1.id, "id-inventado"],
+      };
+
+      const resultado = await useCase.execute({ empresaId: EMPRESA_A, pergunta: "qual a peça que gira dentro da gbm 13" });
+
+      expect(resultado.fontes.map((f) => f.codigo)).toEqual(["I1", "R1"]);
+      expect(resultado.fonte.codigo).toBe("I1");
+      expect(resultado.modeloIdentificado).toBe("GBM 13");
+    });
+
+    test("pergunta recusada pelo agente ainda informa o modelo identificado (para o frontend reaproveitar)", async () => {
+      const { useCase, componenteRepository, ragService } = montarUseCase();
+      semearGbm13(componenteRepository);
+      ragService.proximaResposta = { situacao: "CONTEXTO_INSUFICIENTE", resposta: null, pecaCitadaId: null };
+
+      const resultado = await useCase.execute({ empresaId: EMPRESA_A, pergunta: "qual a tensão da GBM 13?" });
+
+      expect(resultado).toEqual({ situacao: "CONTEXTO_INSUFICIENTE", resposta: null, fonte: null, modeloIdentificado: "GBM 13" });
+    });
+
+    test("sem modelo na pergunta, não afirma listagem completa e mantém o limite de 8 peças", async () => {
+      const { useCase, componenteRepository, ragService } = montarUseCase();
+      for (let i = 0; i < 12; i += 1) {
+        componenteRepository.seedComponente({
+          empresaId: EMPRESA_A,
+          marca: "Bosch",
+          modelo: "GWS 9-125S",
+          tensao: "V127",
+          codigo: `P${i}`,
+          descricao: "Rolamento",
+          embedding: [i, 0, 0],
+        });
+      }
+
+      await useCase.execute({ empresaId: EMPRESA_A, pergunta: "quantos rolamentos existem" });
+
+      expect(ragService.chamadas[0].listagemCompleta).toBeNull();
+      expect(ragService.chamadas[0].contexto).toHaveLength(8);
+    });
+
+    test("RNF11: palavra-chave e modelo só enxergam peças da própria empresa", async () => {
+      const { useCase, componenteRepository, ragService } = montarUseCase();
+      semearGbm13(componenteRepository);
+      componenteRepository.seedComponente({
+        empresaId: EMPRESA_B,
+        marca: "Bosch",
+        modelo: "GBM 13",
+        tensao: "V127",
+        codigo: "OUTRA-EMPRESA",
+        descricao: "Rolamento",
+        embedding: [1, 0, 0],
+      });
+
+      await useCase.execute({ empresaId: EMPRESA_A, pergunta: "quantos rolamentos tem a GBM 13" });
+
+      expect(ragService.chamadas[0].contexto.map((p) => p.codigo)).not.toContain("OUTRA-EMPRESA");
+    });
   });
 
   test("exceção E2: falha ao gerar o embedding da pergunta vira ServiceUnavailableError", async () => {

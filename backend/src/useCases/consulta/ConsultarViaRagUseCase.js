@@ -1,6 +1,12 @@
 const { ValidationError, ServiceUnavailableError } = require("../../domain/errors/DomainErrors");
 
+const { detectarModelos, extrairPalavrasChave, fazReferenciaAoAnterior } = require("./analisarPergunta");
+
 const LIMITE_CONTEXTO = 8;
+// Com o modelo identificado, o contexto pode levar o catálogo inteiro dele
+// (permite contagem e agrupamento sem estourar o tamanho do prompt).
+const LIMITE_COM_MODELO = 80;
+const LIMITE_FONTES = 10;
 
 /**
  * RF12 — Consulta Técnica via RAG (Agente de Consulta). Fluxo: 1) valida a
@@ -39,7 +45,7 @@ class ConsultarViaRagUseCase {
     this.ragService = ragService;
   }
 
-  async execute({ empresaId, pergunta }) {
+  async execute({ empresaId, pergunta, modeloAnterior }) {
     const perguntaNormalizada = pergunta?.trim();
     if (!perguntaNormalizada) {
       throw new ValidationError("Informe uma pergunta técnica.", { pergunta: "Digite sua pergunta técnica." });
@@ -60,11 +66,66 @@ class ConsultarViaRagUseCase {
       );
     }
 
-    const candidatos = await this.componenteRepository.buscarPorSimilaridadeSemantica({
+    // Recuperação em duas frentes (decisão #53): o modelo citado na pergunta
+    // vira filtro do catálogo, e as palavras-chave do assunto são buscadas na
+    // descrição das peças, somadas à busca semântica.
+    const modelosCadastrados = (await this.componenteRepository.listarModelosValidados({ empresaId })).map(
+      (item) => item.modelo
+    );
+    let modelos = detectarModelos(perguntaNormalizada, modelosCadastrados);
+
+    // "Dessa ferramenta", "dele"...: sem modelo na pergunta, usa o da pergunta
+    // anterior que o frontend reenviou (o backend não guarda histórico).
+    if (
+      modelos.length === 0 &&
+      typeof modeloAnterior === "string" &&
+      modelosCadastrados.includes(modeloAnterior) &&
+      fazReferenciaAoAnterior(perguntaNormalizada)
+    ) {
+      modelos = [modeloAnterior];
+    }
+
+    const palavras = extrairPalavrasChave(perguntaNormalizada, modelos);
+    const comModelo = modelos.length > 0;
+    const limite = comModelo ? LIMITE_COM_MODELO : LIMITE_CONTEXTO;
+
+    const porPalavraChave = await this.componenteRepository.buscarPorPalavrasChave({
+      empresaId,
+      palavras,
+      modelos: comModelo ? modelos : undefined,
+      limite,
+    });
+    const semanticos = await this.componenteRepository.buscarPorSimilaridadeSemantica({
       empresaId,
       vetor,
-      limite: LIMITE_CONTEXTO,
+      modelos: comModelo ? modelos : undefined,
+      limite,
     });
+
+    let candidatos;
+    let listagemCompleta = null;
+
+    if (comModelo) {
+      // Se o catálogo inteiro do modelo cabe no contexto, vai tudo: assim o agente
+      // consegue contar e agrupar peças por conceito ("o que gira", "o motor"),
+      // mesmo quando nenhuma descrição traz a palavra perguntada.
+      const doModelo = await this.componenteRepository.listarPecasDoModelo({
+        empresaId,
+        modelos,
+        limite: LIMITE_COM_MODELO + 1,
+      });
+
+      if (doModelo.length <= LIMITE_COM_MODELO) {
+        candidatos = this.#mesclar([...porPalavraChave, ...semanticos, ...doModelo], doModelo.length);
+        listagemCompleta = { modelos };
+      } else {
+        candidatos = this.#mesclar([...porPalavraChave, ...semanticos], LIMITE_COM_MODELO);
+        // Catálogo grande demais: só garante completude para os termos buscados.
+        if (palavras.length > 0 && porPalavraChave.length < limite) listagemCompleta = { modelos, palavras };
+      }
+    } else {
+      candidatos = this.#mesclar([...porPalavraChave, ...semanticos], limite);
+    }
 
     if (candidatos.length === 0) {
       return this.#semContexto("SEM_CONTEXTO_RELEVANTE");
@@ -72,7 +133,11 @@ class ConsultarViaRagUseCase {
 
     let geracao;
     try {
-      geracao = await this.ragService.gerarResposta({ pergunta: perguntaNormalizada, contexto: candidatos });
+      geracao = await this.ragService.gerarResposta({
+        pergunta: perguntaNormalizada,
+        contexto: candidatos,
+        listagemCompleta,
+      });
     } catch (erro) {
       console.error("[RF12] falha ao gerar resposta via Agente de Consulta:", erro.message); // eslint-disable-line no-console
       throw new ServiceUnavailableError(
@@ -80,28 +145,58 @@ class ConsultarViaRagUseCase {
       );
     }
 
+    const modeloIdentificado = modelos[0];
+
     if (geracao.situacao !== "RESPONDIDO") {
-      return this.#semContexto(geracao.situacao);
+      return this.#semContexto(geracao.situacao, modeloIdentificado);
     }
 
-    const pecaCitada = candidatos.find((peca) => peca.id === geracao.pecaCitadaId) ?? candidatos[0];
+    // A resposta pode citar várias peças (ex.: "as peças que giram"). Só valem
+    // ids que de fato estavam no contexto; sem nenhum válido, cai na primeira.
+    const idsCitados = [geracao.pecaCitadaId, ...(geracao.pecasCitadasIds ?? [])];
+    const citadas = [];
+    for (const id of idsCitados) {
+      const peca = candidatos.find((candidata) => candidata.id === id);
+      if (peca && !citadas.includes(peca)) citadas.push(peca);
+    }
+    if (citadas.length === 0) citadas.push(candidatos[0]);
+    const fontes = citadas.slice(0, LIMITE_FONTES).map((peca) => this.#paraFonte(peca));
 
     return {
       situacao: "RESPONDIDO",
       resposta: geracao.resposta,
-      fonte: {
-        marca: pecaCitada.marca,
-        modelo: pecaCitada.modelo,
-        tensao: pecaCitada.tensao,
-        codigo: pecaCitada.codigo,
-        catalogoId: pecaCitada.catalogoId,
-        validadoEm: pecaCitada.validadoEm ?? null,
-      },
+      fonte: fontes[0],
+      fontes,
+      ...(modeloIdentificado ? { modeloIdentificado } : {}),
     };
   }
 
-  #semContexto(situacao) {
-    return { situacao, resposta: null, fonte: null };
+  #paraFonte(peca) {
+    return {
+      marca: peca.marca,
+      modelo: peca.modelo,
+      tensao: peca.tensao,
+      codigo: peca.codigo,
+      catalogoId: peca.catalogoId,
+      validadoEm: peca.validadoEm ?? null,
+    };
+  }
+
+  // Palavra-chave primeiro (casamento direto com o que foi perguntado), depois
+  // semântica e o restante do catálogo; sem repetir peça e respeitando o limite.
+  #mesclar(pecas, limite) {
+    const vistos = new Set();
+    const lista = [];
+    for (const peca of pecas) {
+      if (vistos.has(peca.id)) continue;
+      vistos.add(peca.id);
+      lista.push(peca);
+    }
+    return lista.slice(0, limite);
+  }
+
+  #semContexto(situacao, modeloIdentificado) {
+    return { situacao, resposta: null, fonte: null, ...(modeloIdentificado ? { modeloIdentificado } : {}) };
   }
 }
 

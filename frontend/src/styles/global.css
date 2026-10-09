@@ -1515,6 +1515,18 @@ a {
   }
 }
 
+.fonte-citada__codigos {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+/* A resposta pode listar várias peças, uma por linha */
+.chat-bolha p {
+  white-space: pre-line;
+}
+
 /* --- Fase 4: consultas --- */
 .segmentado {
   display: inline-flex;

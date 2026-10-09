@@ -24,10 +24,14 @@ class RAGService {
    * @param {Array<{ id: string, codigo: string, descricao: string|null, posicaoVisual: string|null, marca: string, modelo: string, tensao: string }>} dados.contexto
    *   peças candidatas, já recuperadas por similaridade semântica (RF11), na
    *   ordem de relevância (mais próxima primeiro).
+   * @param {{ modelos: string[], palavras: string[] }|null} [dados.listagemCompleta]
+   *   quando presente, garante que o contexto tem TODAS as peças dos modelos
+   *   citados cuja descrição contém alguma das palavras (permite contagem).
    * @returns {Promise<{
    *   situacao: "RESPONDIDO"|"CONTEXTO_INSUFICIENTE"|"SEM_CONTEXTO_RELEVANTE",
    *   resposta: string|null,
    *   pecaCitadaId: string|null,
+   *   pecasCitadasIds?: string[],
    * }>}
    */
   async gerarResposta(_dados) {

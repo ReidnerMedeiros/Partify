@@ -120,6 +120,34 @@ describe("POST /consulta-tecnica — RF12", () => {
     expect(resposta.status).toBe(200);
     expect(resposta.body.situacao).toBe("RESPONDIDO");
     expect(typeof resposta.body.resposta).toBe("string");
+    expect(resposta.body.fontes).toHaveLength(1);
+    expect(resposta.body.fontes[0].codigo).toBe("ABC123");
+  });
+
+  test("com o modelo na pergunta, devolve modeloIdentificado e aceita modeloAnterior no corpo", async () => {
+    const { token, empresa } = await cadastrarEmpresaELogar(app);
+    factories.componenteRepository.seedComponente({
+      empresaId: empresa.id,
+      codigo: "ABC123",
+      descricao: "Escova de carvão",
+      marca: "Bosch",
+      modelo: "GWS 9-125S",
+      tensao: "V127",
+      embedding: [10, 0, 0],
+    });
+
+    const comModelo = await request(app)
+      .post("/consulta-tecnica")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ pergunta: "Qual a escova da GWS 9-125S?" });
+    expect(comModelo.body.modeloIdentificado).toBe("GWS 9-125S");
+
+    const porReferencia = await request(app)
+      .post("/consulta-tecnica")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ pergunta: "E a escova dessa ferramenta?", modeloAnterior: "GWS 9-125S" });
+    expect(porReferencia.status).toBe(200);
+    expect(porReferencia.body.modeloIdentificado).toBe("GWS 9-125S");
   });
 
   test("pergunta vazia retorna 422", async () => {

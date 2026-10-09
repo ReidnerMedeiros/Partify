@@ -46,17 +46,22 @@ class ConsultaController {
   // padrão do "semRegistrosNaBase" no RF11) — só E2 (falha de comunicação com a
   // Gemini API) vira erro (503), tratado pelo errorHandler.
   perguntar = async (req, res) => {
-    const { pergunta } = req.body;
+    const { pergunta, modeloAnterior } = req.body;
 
+    // `modeloAnterior` é o modelo da pergunta anterior, reenviado pelo frontend
+    // para resolver "dessa ferramenta"; o backend não guarda histórico.
     const resultado = await this.consultarViaRagUseCase.execute({
       empresaId: req.auth.empresaId,
       pergunta,
+      modeloAnterior: typeof modeloAnterior === "string" ? modeloAnterior : undefined,
     });
 
     return res.status(200).json({
       situacao: resultado.situacao,
       resposta: resultado.resposta,
       fonte: resultado.fonte,
+      fontes: resultado.fontes ?? [],
+      modeloIdentificado: resultado.modeloIdentificado ?? null,
     });
   };
 }

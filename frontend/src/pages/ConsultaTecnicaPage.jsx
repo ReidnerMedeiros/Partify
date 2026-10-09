@@ -55,6 +55,9 @@ function ConsultaTecnicaPage() {
   const [mensagens, setMensagens] = useState([]);
   const [enviando, setEnviando] = useState(false);
   const [abrindoId, setAbrindoId] = useState(null);
+  // Último modelo citado na conversa, reenviado para o backend entender
+  // "dessa ferramenta". Zerado em "Limpar conversa".
+  const [modeloContexto, setModeloContexto] = useState(undefined);
 
   function aoEnviar(evento) {
     evento.preventDefault();
@@ -71,7 +74,8 @@ function ConsultaTecnicaPage() {
     setEnviando(true);
 
     try {
-      const resultado = await perguntarTecnico(perguntaAtual);
+      const resultado = await perguntarTecnico(perguntaAtual, modeloContexto);
+      if (resultado.modeloIdentificado) setModeloContexto(resultado.modeloIdentificado);
       setMensagens((atual) => [
         ...atual,
         {
@@ -80,6 +84,7 @@ function ConsultaTecnicaPage() {
           situacao: resultado.situacao,
           texto: resultado.resposta,
           fonte: resultado.fonte,
+          fontes: resultado.fontes?.length ? resultado.fontes : resultado.fonte ? [resultado.fonte] : [],
         },
       ]);
     } catch (erro) {
@@ -111,7 +116,12 @@ function ConsultaTecnicaPage() {
           <div className="page-toolbar">
             <h2>Consulta Técnica (IA)</h2>
             {mensagens.length > 0 && (
-              <button type="button" className="btn btn--outline btn--sm" onClick={() => setMensagens([])} disabled={enviando}>
+              <button type="button" className="btn btn--outline btn--sm" onClick={() => {
+                  setMensagens([]);
+                  setModeloContexto(undefined);
+                }}
+                disabled={enviando}
+              >
                 Limpar conversa
               </button>
             )}
@@ -144,25 +154,34 @@ function ConsultaTecnicaPage() {
                 {mensagem.autor === "ia" && mensagem.situacao === "RESPONDIDO" && (
                   <>
                     <p>{mensagem.texto}</p>
-                    {mensagem.fonte && (
+                    {mensagem.fontes?.length > 0 && (
                       <div className="fonte-citada">
                         <div className="fonte-citada__texto">
-                          Fonte citada: {mensagem.fonte.marca} {mensagem.fonte.modelo} — Vista Explodida
-                          {formatarData(mensagem.fonte.validadoEm) && ` (validado em ${formatarData(mensagem.fonte.validadoEm)})`}
+                          {mensagem.fontes.length > 1 ? "Fontes citadas" : "Fonte citada"}: {mensagem.fontes[0].marca}{" "}
+                          {mensagem.fontes[0].modelo} — Vista Explodida
+                          {formatarData(mensagem.fontes[0].validadoEm) &&
+                            ` (validado em ${formatarData(mensagem.fontes[0].validadoEm)})`}
                         </div>
-                        <span className="badge badge--confianca">{mensagem.fonte.codigo}</span>
+                        <div className="fonte-citada__codigos">
+                          {mensagem.fontes.map((fonte) => (
+                            <span key={fonte.codigo} className="badge badge--confianca">
+                              {fonte.codigo}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
-                    {mensagem.fonte && (
+                    {[...new Set((mensagem.fontes ?? []).map((fonte) => fonte.catalogoId))].map((catalogoId) => (
                       <button
+                        key={catalogoId}
                         type="button"
                         className="btn btn--outline btn--sm"
-                        onClick={() => aoVerVistaExplodida(mensagem.fonte.catalogoId)}
-                        disabled={abrindoId === mensagem.fonte.catalogoId}
+                        onClick={() => aoVerVistaExplodida(catalogoId)}
+                        disabled={abrindoId === catalogoId}
                       >
-                        {abrindoId === mensagem.fonte.catalogoId ? "Abrindo..." : "Ver Vista Explodida"}
+                        {abrindoId === catalogoId ? "Abrindo..." : "Ver Vista Explodida"}
                       </button>
-                    )}
+                    ))}
                   </>
                 )}
 

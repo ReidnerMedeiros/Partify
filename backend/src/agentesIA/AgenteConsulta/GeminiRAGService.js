@@ -37,7 +37,7 @@ class GeminiRAGService extends RAGService {
     this.client = new GoogleGenAI({ apiKey });
   }
 
-  async gerarResposta({ pergunta, contexto }) {
+  async gerarResposta({ pergunta, contexto, listagemCompleta = null }) {
     const resposta = await gerarConteudoComFallback({
       client: this.client,
       modelos: this.modelos,
@@ -46,7 +46,7 @@ class GeminiRAGService extends RAGService {
       contents: [
         {
           role: "user",
-          parts: [{ text: montarPromptUsuario({ pergunta, contexto }) }],
+          parts: [{ text: montarPromptUsuario({ pergunta, contexto, listagemCompleta }) }],
         },
       ],
       config: {
@@ -72,12 +72,19 @@ class GeminiRAGService extends RAGService {
     // nesta requisição — evita citar uma peça "inventada" mesmo em caso de
     // alucinação pontual do modelo.
     const idsValidos = new Set(contexto.map((peca) => peca.id));
-    const pecaCitadaId = situacao === "RESPONDIDO" && idsValidos.has(json.pecaCitadaId) ? json.pecaCitadaId : null;
+    const respondido = situacao === "RESPONDIDO";
+    const pecasCitadasIds = respondido
+      ? [...new Set([json.pecaCitadaId, ...(Array.isArray(json.pecasCitadasIds) ? json.pecasCitadasIds : [])])].filter((id) =>
+          idsValidos.has(id)
+        )
+      : [];
+    const pecaCitadaId = pecasCitadasIds[0] ?? null;
 
     return {
       situacao,
-      resposta: situacao === "RESPONDIDO" ? json.resposta ?? null : null,
+      resposta: respondido ? json.resposta ?? null : null,
       pecaCitadaId,
+      pecasCitadasIds,
     };
   }
 }

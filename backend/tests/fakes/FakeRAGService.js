@@ -11,8 +11,8 @@ class FakeRAGService {
     this.chamadas = [];
   }
 
-  async gerarResposta({ pergunta, contexto }) {
-    this.chamadas.push({ pergunta, contexto });
+  async gerarResposta({ pergunta, contexto, listagemCompleta = null }) {
+    this.chamadas.push({ pergunta, contexto, listagemCompleta });
     if (this.deveFalhar) {
       throw new Error("Falha simulada ao gerar resposta via Agente de Consulta.");
     }

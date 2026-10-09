@@ -13,8 +13,10 @@ async function buscarComponentes({ termo, marca, tensao, modo }) {
 
 // POST /consulta-tecnica — fluxo básico + E1/E2/E3. Cada pergunta é
 // independente (sem histórico mantido pelo backend — pós-condição do RF12).
-async function perguntarTecnico(pergunta) {
-  const { data } = await api.post("/consulta-tecnica", { pergunta });
+// `modeloAnterior` (opcional) é o modelo citado na pergunta anterior, só para
+// o backend entender "dessa ferramenta"; nenhum histórico é guardado lá.
+async function perguntarTecnico(pergunta, modeloAnterior) {
+  const { data } = await api.post("/consulta-tecnica", { pergunta, modeloAnterior });
   return data;
 }
 
