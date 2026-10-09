@@ -91,25 +91,37 @@ function IconLogOut() {
   );
 }
 
-/* Itens do menu. `rota` só existe para os requisitos já implementados — os
-   demais aparecem no layout (fiéis ao protótipo) mas ficam desabilitados até
-   os respectivos RFs serem construídos. "Manter Usuários" (RF05) é exclusivo
-   do Administrador, então sua rota é montada dinamicamente dentro do
-   componente, conforme o perfil do usuário autenticado. */
+/* Itens do menu. "Gestão de Usuários e Sistema" (RF05 + acesso ao Log do
+   Sistema, RF13) é exclusivo do Administrador: para os demais perfis o botão
+   nem aparece (antes ficava só desabilitado, o que revelava sua existência).
+   Quando ele some, o divisor que vinha depois dele passa para o item anterior
+   para o menu manter a mesma separação visual. */
 function montarItensMenu(usuario) {
+  const ehAdministrador = usuario?.perfil === "ADMINISTRADOR";
+
   return [
     { chave: "importar-catalogo", rotulo: "Importar Catálogo", Icone: IconUpload, rota: "/catalogos/importar" },
     { chave: "consultar-componentes", rotulo: "Consultar Componentes", Icone: IconSearch, rota: "/componentes" },
     { chave: "consulta-tecnica-ia", rotulo: "Consulta Técnica (IA)", Icone: IconChat, rota: "/consulta-tecnica", divisorApos: true },
     { chave: "documentos-pendentes", rotulo: "Documentos Pendentes", Icone: IconClock, rota: "/catalogos/pendentes" },
-    { chave: "manter-catalogo", rotulo: "Manter Catálogo", Icone: IconList, rota: "/catalogos" },
     {
-      chave: "manter-usuarios",
-      rotulo: "Manter Usuários",
-      Icone: IconUsers,
-      rota: usuario?.perfil === "ADMINISTRADOR" ? "/usuarios" : undefined,
-      divisorApos: true,
+      chave: "consultar-catalogos",
+      rotulo: "Consultar Catálogos",
+      Icone: IconList,
+      rota: "/catalogos",
+      divisorApos: !ehAdministrador,
     },
+    ...(ehAdministrador
+      ? [
+          {
+            chave: "gestao-usuarios-sistema",
+            rotulo: "Gestão de Usuários e Sistema",
+            Icone: IconUsers,
+            rota: "/usuarios",
+            divisorApos: true,
+          },
+        ]
+      : []),
     { chave: "dados-empresa", rotulo: "Dados da Empresa", Icone: IconBuilding, rota: "/empresa", divisorApos: true },
   ];
 }

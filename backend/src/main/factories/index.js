@@ -56,6 +56,8 @@ const { BaixarArquivoCatalogoUseCase } = require("../../useCases/catalogo/Baixar
 const { ListarDocumentosPendentesUseCase } = require("../../useCases/catalogo/ListarDocumentosPendentesUseCase");
 const { BuscarDocumentoPendenteUseCase } = require("../../useCases/catalogo/BuscarDocumentoPendenteUseCase");
 const { ExcluirCatalogoUseCase } = require("../../useCases/catalogo/ExcluirCatalogoUseCase");
+const { ListarCatalogosValidadosUseCase } = require("../../useCases/catalogo/ListarCatalogosValidadosUseCase");
+const { ExcluirCatalogoValidadoUseCase } = require("../../useCases/catalogo/ExcluirCatalogoValidadoUseCase");
 const { BuscarComponentesUseCase } = require("../../useCases/consulta/BuscarComponentesUseCase");
 const { ConsultarViaRagUseCase } = require("../../useCases/consulta/ConsultarViaRagUseCase");
 const { ConsultarLogAuditoriaUseCase } = require("../../useCases/log/ConsultarLogAuditoriaUseCase");
@@ -213,6 +215,12 @@ const baixarArquivoCatalogoUseCase = new BaixarArquivoCatalogoUseCase({ catalogo
 const listarDocumentosPendentesUseCase = new ListarDocumentosPendentesUseCase({ catalogoRepository });
 const buscarDocumentoPendenteUseCase = new BuscarDocumentoPendenteUseCase({ catalogoRepository });
 const excluirCatalogoUseCase = new ExcluirCatalogoUseCase({ catalogoRepository, fileStorageService, logAuditoriaRepository });
+const listarCatalogosValidadosUseCase = new ListarCatalogosValidadosUseCase({ catalogoRepository });
+const excluirCatalogoValidadoUseCase = new ExcluirCatalogoValidadoUseCase({
+  catalogoRepository,
+  fileStorageService,
+  logAuditoriaRepository,
+});
 // RF11 — usa a instância própria do Agente de Consulta (embeddingServiceConsulta),
 // separada da do Agente Validador (decisão #25 em CONTEXTO.md).
 const buscarComponentesUseCase = new BuscarComponentesUseCase({
@@ -264,6 +272,8 @@ const catalogoController = new CatalogoController({
   listarDocumentosPendentesUseCase,
   buscarDocumentoPendenteUseCase,
   excluirCatalogoUseCase,
+  listarCatalogosValidadosUseCase,
+  excluirCatalogoValidadoUseCase,
 });
 const consultaController = new ConsultaController({ buscarComponentesUseCase, consultarViaRagUseCase });
 const logAuditoriaController = new LogAuditoriaController({ consultarLogAuditoriaUseCase });

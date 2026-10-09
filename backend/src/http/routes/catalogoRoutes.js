@@ -22,12 +22,15 @@ router.get("/catalogos/pendentes", authMiddleware, asyncHandler(catalogoControll
 router.get("/catalogos/pendentes/:id", authMiddleware, asyncHandler(catalogoController.detalharPendente));
 router.delete("/catalogos/pendentes/:id", authMiddleware, asyncHandler(catalogoController.excluirPendente));
 
-// RF09 — Manter Catálogo (A2 consulta, A3 edição, A4 exclusão). Mesma
-// pré-condição do RF06/07/08: qualquer perfil autenticado.
+// RF09 — Consultar Catálogos (A2 consulta, A3 edição, A4 exclusão). Mesma
+// pré-condição do RF06/07/08: qualquer perfil autenticado. "/catalogos/validados"
+// também é literal e precisa vir antes das rotas com ":id".
 router.get("/catalogos", authMiddleware, asyncHandler(catalogoController.listar));
+router.get("/catalogos/validados", authMiddleware, asyncHandler(catalogoController.listarCatalogos));
 router.delete("/catalogos/pecas/:pecaId", authMiddleware, asyncHandler(catalogoController.excluirPeca));
 router.get("/catalogos/:id/arquivo", authMiddleware, asyncHandler(catalogoController.baixarArquivo));
 router.get("/catalogos/:id", authMiddleware, asyncHandler(catalogoController.detalhar));
 router.put("/catalogos/:id", authMiddleware, asyncHandler(catalogoController.atualizar));
+router.delete("/catalogos/:id", authMiddleware, asyncHandler(catalogoController.excluirCatalogoValidado));
 
 module.exports = { catalogoRoutes: router };

@@ -39,6 +39,17 @@ async function listarPecas({ marca, modelo, codigo } = {}) {
   return data.pecas;
 }
 
+// GET /catalogos/validados — RF09/A2, lista os catálogos validados (um item por documento).
+async function listarCatalogosValidados({ marca, modelo, codigo } = {}) {
+  const { data } = await api.get("/catalogos/validados", { params: { marca, modelo, codigo } });
+  return data.catalogos;
+}
+
+// DELETE /catalogos/:id — RF09, exclui um catálogo validado inteiro (peças, validações e PDF).
+async function excluirCatalogoValidado(catalogoId) {
+  await api.delete(`/catalogos/${catalogoId}`);
+}
+
 // GET /catalogos/:id — RF09/A3, carrega o catálogo pra tela de edição.
 async function buscarCatalogo(catalogoId) {
   const { data } = await api.get(`/catalogos/${catalogoId}`);
@@ -85,6 +96,8 @@ export {
   reextrairCatalogo,
   validarCatalogo,
   listarPecas,
+  listarCatalogosValidados,
+  excluirCatalogoValidado,
   buscarCatalogo,
   buscarArquivoCatalogo,
   atualizarCatalogo,

@@ -117,6 +117,89 @@ describe("Ordem das rotas /catalogos/pendentes vs /catalogos/:id — RF09/RF10",
   });
 });
 
+async function importarEValidar(token) {
+  const upload = await request(app)
+    .post("/catalogos")
+    .set("Authorization", `Bearer ${token}`)
+    .attach("arquivo", Buffer.from("%PDF-1.4 fake"), { filename: "catalogo.pdf", contentType: "application/pdf" });
+
+  await request(app)
+    .put(`/catalogos/${upload.body.catalogo.id}/validar`)
+    .set("Authorization", `Bearer ${token}`)
+    .send({
+      marca: "Bosch",
+      modelo: "GWS 9-125S",
+      tensao: "V127",
+      // Reaproveita o id da peça extraída; sem ele, a validação criaria uma peça nova
+      // e o catálogo ficaria com duas.
+      pecas: upload.body.catalogo.pecas.map((peca) => ({
+        id: peca.id,
+        codigo: peca.codigo,
+        descricao: peca.descricao,
+        posicaoVisual: peca.posicaoVisual,
+      })),
+    });
+
+  return upload.body.catalogo.id;
+}
+
+describe("GET /catalogos/validados e DELETE /catalogos/:id — RF09, visão por catálogo", () => {
+  test("GET /catalogos/validados exige token (401 sem Authorization)", async () => {
+    const resposta = await request(app).get("/catalogos/validados");
+    expect(resposta.status).toBe(401);
+  });
+
+  test("GET /catalogos/validados NÃO é capturada por /catalogos/:id e lista o catálogo validado", async () => {
+    const { token } = await cadastrarEmpresaELogar(app);
+    factories.extractionService.proximaResposta = respostaCompletaDaExtracao();
+    const catalogoId = await importarEValidar(token);
+
+    const resposta = await request(app).get("/catalogos/validados").set("Authorization", `Bearer ${token}`);
+
+    expect(resposta.status).toBe(200);
+    expect(resposta.body.catalogos).toHaveLength(1);
+    expect(resposta.body.catalogos[0]).toMatchObject({ id: catalogoId, marca: "Bosch", modelo: "GWS 9-125S", totalPecas: 1 });
+  });
+
+  test("DELETE /catalogos/:id exclui o catálogo validado e ele some da listagem", async () => {
+    const { token } = await cadastrarEmpresaELogar(app);
+    factories.extractionService.proximaResposta = respostaCompletaDaExtracao();
+    const catalogoId = await importarEValidar(token);
+
+    const exclusao = await request(app).delete(`/catalogos/${catalogoId}`).set("Authorization", `Bearer ${token}`);
+    const listagem = await request(app).get("/catalogos/validados").set("Authorization", `Bearer ${token}`);
+
+    expect(exclusao.status).toBe(200);
+    expect(listagem.body.catalogos).toHaveLength(0);
+  });
+
+  test("DELETE /catalogos/:id de um catálogo ainda não validado retorna 404", async () => {
+    const { token } = await cadastrarEmpresaELogar(app);
+    factories.extractionService.proximaResposta = respostaCompletaDaExtracao();
+    const upload = await request(app)
+      .post("/catalogos")
+      .set("Authorization", `Bearer ${token}`)
+      .attach("arquivo", Buffer.from("%PDF-1.4 fake"), { filename: "catalogo.pdf", contentType: "application/pdf" });
+
+    const resposta = await request(app).delete(`/catalogos/${upload.body.catalogo.id}`).set("Authorization", `Bearer ${token}`);
+
+    expect(resposta.status).toBe(404);
+  });
+
+  test("RNF11: DELETE /catalogos/:id com o token de outra empresa retorna 404 e não apaga", async () => {
+    const { token: tokenEmpresaA } = await cadastrarEmpresaELogar(app);
+    const { token: tokenEmpresaB } = await cadastrarEmpresaELogar(app);
+    factories.extractionService.proximaResposta = respostaCompletaDaExtracao();
+    const catalogoId = await importarEValidar(tokenEmpresaA);
+
+    const resposta = await request(app).delete(`/catalogos/${catalogoId}`).set("Authorization", `Bearer ${tokenEmpresaB}`);
+    const listagemA = await request(app).get("/catalogos/validados").set("Authorization", `Bearer ${tokenEmpresaA}`);
+
+    expect(resposta.status).toBe(404);
+    expect(listagemA.body.catalogos).toHaveLength(1);
+  });
+});
+
 describe("PUT /catalogos/:id/validar — RF08 (HITL)", () => {
   test("valida e salva com sucesso, marcando o catálogo como VALIDADO", async () => {
     const { token } = await cadastrarEmpresaELogar(app);

@@ -119,13 +119,13 @@ function UsuariosPage() {
 
       <div className="page-content">
         <div className="content-card content-card--wide">
-          <h2>Manter Usuários</h2>
+          <h2>Gestão de Usuários e Sistema</h2>
 
           {mensagemErro && <div className="alert alert--error">{mensagemErro}</div>}
 
           <div className="page-toolbar">
-            <button type="button" className="btn btn--outline" onClick={() => navigate("/log-sistema")}>
-              Log do Sistema
+            <button type="button" className="btn btn--primary" onClick={() => navigate("/log-sistema")}>
+              Histórico do Sistema
             </button>
             <button type="button" className="btn btn--primary" onClick={() => setModalNovo(true)}>
               Novo Usuário

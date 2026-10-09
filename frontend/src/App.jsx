@@ -12,6 +12,7 @@ import ImportarCatalogoPage from "./pages/ImportarCatalogoPage.jsx";
 import ValidarCatalogoPage from "./pages/ValidarCatalogoPage.jsx";
 import CatalogoPage from "./pages/CatalogoPage.jsx";
 import EditarCatalogoPage from "./pages/EditarCatalogoPage.jsx";
+import VisualizarCatalogoPage from "./pages/VisualizarCatalogoPage.jsx";
 import DocumentosPendentesPage from "./pages/DocumentosPendentesPage.jsx";
 import ConsultarComponentesPage from "./pages/ConsultarComponentesPage.jsx";
 import ConsultaTecnicaPage from "./pages/ConsultaTecnicaPage.jsx";
@@ -86,6 +87,14 @@ function App() {
         element={
           <ProtectedRoute>
             <CatalogoPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/catalogos/:id/visualizar"
+        element={
+          <ProtectedRoute>
+            <VisualizarCatalogoPage />
           </ProtectedRoute>
         }
       />

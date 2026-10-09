@@ -64,6 +64,16 @@ class CatalogoRepository {
   }
 
   /**
+   * RF09 — fluxo alternativo A2, visão por catálogo. Lista os catálogos
+   * VALIDADO da empresa (um item por documento: id, nomeArquivo, marca, modelo,
+   * tensao, totalPecas, validadoPor, validadoEm, criadoEm), com filtros
+   * opcionais por marca/modelo/código (catálogos que contêm a peça).
+   */
+  async listarCatalogosValidados(_filtros /* { empresaId, marca, modelo, codigo } */) {
+    throw new Error("CatalogoRepository.listarCatalogosValidados não implementado.");
+  }
+
+  /**
    * RF09 — fluxo alternativo A3 (Atualização de registro). Aplica as edições
    * do ator a marca/modelo/tensão e à lista de peças de um catálogo já
    * VALIDADO: peças com id são atualizadas, peças sem id são criadas, e peças

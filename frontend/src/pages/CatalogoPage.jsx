@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "../components/TopBar.jsx";
 import ConfirmModal from "../components/ConfirmModal.jsx";
-import { listarPecas, excluirPeca } from "../services/catalogoService.js";
+import { listarCatalogosValidados, excluirCatalogoValidado, buscarArquivoCatalogo } from "../services/catalogoService.js";
 import { extrairErroApi } from "../services/api.js";
 
 const ROTULO_TENSAO = {
@@ -12,10 +12,38 @@ const ROTULO_TENSAO = {
   NAO_INFORMADO: "Não informado",
 };
 
+function IconFile() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+    </svg>
+  );
+}
+
+function IconEye() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
 function IconEdit() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+    </svg>
+  );
+}
+
+function IconDownload() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
     </svg>
   );
 }
@@ -36,43 +64,53 @@ function formatarData(iso) {
   return iso ? new Date(iso).toLocaleDateString("pt-BR") : "—";
 }
 
+function descreverCatalogo(catalogo) {
+  const identificacao = [catalogo.marca, catalogo.modelo].filter(Boolean).join(" ");
+  return identificacao || "Sem marca e modelo";
+}
+
 /**
- * RF09 — Manter Catálogo, fluxo alternativo A2 (Consulta de registros). Lista
- * as peças já validadas (RF08), com filtros por marca/modelo/código — só
- * catálogos VALIDADO aparecem aqui; pendentes/irresolúveis têm sua própria
- * fila em "Documentos Pendentes" (RF10, ver DocumentosPendentesPage).
+ * RF09 — Consultar Catálogos, fluxo alternativo A2 (Consulta de registros).
+ * Lista os catálogos já validados (RF08), um cartão por documento, com filtros
+ * por marca/modelo/código da peça (com o código, aparecem os catálogos que
+ * contêm aquela peça). A busca peça a peça fica em "Consultar Componentes"
+ * (RF11). Ações por cartão: Ver peças (tela só de leitura), Editar (A3), Baixar
+ * PDF e Excluir o catálogo inteiro. Catálogos pendentes/irresolúveis têm sua
+ * própria fila em "Documentos Pendentes" (RF10, ver DocumentosPendentesPage).
  */
 function CatalogoPage() {
   const navigate = useNavigate();
 
-  const [pecas, setPecas] = useState([]);
+  const [catalogos, setCatalogos] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [mensagemErro, setMensagemErro] = useState("");
+  const [mensagemSucesso, setMensagemSucesso] = useState("");
 
   const [marca, setMarca] = useState("");
   const [modelo, setModelo] = useState("");
   const [codigo, setCodigo] = useState("");
 
-  const [pecaParaExcluir, setPecaParaExcluir] = useState(null);
+  const [catalogoParaExcluir, setCatalogoParaExcluir] = useState(null);
   const [excluindo, setExcluindo] = useState(false);
-
-  useEffect(() => {
-    carregarPecas();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const [baixandoId, setBaixandoId] = useState(null);
 
   // Opções da marca derivadas da própria listagem (sem filtro), já que não
   // existe hoje um endpoint dedicado para "todas as marcas da empresa".
   const [marcasDisponiveis, setMarcasDisponiveis] = useState([]);
 
-  async function carregarPecas(filtros) {
+  useEffect(() => {
+    carregarCatalogos();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function carregarCatalogos(filtros) {
     setCarregando(true);
     setMensagemErro("");
     try {
-      const lista = await listarPecas(filtros);
-      setPecas(lista);
+      const lista = await listarCatalogosValidados(filtros);
+      setCatalogos(lista);
       if (!filtros) {
-        setMarcasDisponiveis([...new Set(lista.map((p) => p.marca).filter(Boolean))].sort());
+        setMarcasDisponiveis([...new Set(lista.map((c) => c.marca).filter(Boolean))].sort());
       }
     } catch (erro) {
       setMensagemErro(extrairErroApi(erro).mensagem);
@@ -82,17 +120,32 @@ function CatalogoPage() {
   }
 
   function aoConsultar() {
-    carregarPecas({ marca, modelo, codigo });
+    setMensagemSucesso("");
+    carregarCatalogos({ marca, modelo, codigo });
+  }
+
+  async function aoBaixarPdf(catalogo) {
+    setMensagemErro("");
+    setBaixandoId(catalogo.id);
+    try {
+      const url = await buscarArquivoCatalogo(catalogo.id);
+      window.open(url, "_blank", "noopener");
+    } catch (erro) {
+      setMensagemErro(extrairErroApi(erro).mensagem);
+    } finally {
+      setBaixandoId(null);
+    }
   }
 
   async function confirmarExclusao() {
-    if (!pecaParaExcluir) return;
+    if (!catalogoParaExcluir) return;
     setExcluindo(true);
     setMensagemErro("");
     try {
-      await excluirPeca(pecaParaExcluir.id);
-      setPecas((atual) => atual.filter((p) => p.id !== pecaParaExcluir.id));
-      setPecaParaExcluir(null);
+      await excluirCatalogoValidado(catalogoParaExcluir.id);
+      setCatalogos((atual) => atual.filter((c) => c.id !== catalogoParaExcluir.id));
+      setMensagemSucesso(`Catálogo "${catalogoParaExcluir.nomeArquivo}" excluído com sucesso.`);
+      setCatalogoParaExcluir(null);
     } catch (erro) {
       setMensagemErro(extrairErroApi(erro).mensagem);
     } finally {
@@ -106,9 +159,11 @@ function CatalogoPage() {
 
       <div className="page-content">
         <div className="content-card content-card--wide">
-          <h2>Manter Catálogo</h2>
+          <h2>Consultar Catálogos</h2>
+          <p className="content-card__subtitle">Catálogos já validados e salvos. Para buscar uma peça específica, use Consultar Componentes.</p>
 
           {mensagemErro && <div className="alert alert--error">{mensagemErro}</div>}
+          {mensagemSucesso && <div className="alert alert--success">{mensagemSucesso}</div>}
 
           <div className="filtros-row">
             <div className="field">
@@ -135,78 +190,84 @@ function CatalogoPage() {
             </button>
           </div>
 
-          <div className="table-card">
-            {carregando ? (
-              <p className="table-card__estado">Carregando...</p>
-            ) : pecas.length === 0 ? (
-              <p className="table-card__estado">Nenhuma peça validada encontrada.</p>
-            ) : (
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Código</th>
-                    <th>Qtd.</th>
-                    <th>Descrição</th>
-                    <th>Marca</th>
-                    <th>Modelo</th>
-                    <th>Tensão</th>
-                    <th>Validado por</th>
-                    <th>Data</th>
-                    <th>Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {pecas.map((peca) => (
-                    <tr key={peca.id}>
-                      <td>
-                        <span className="table-link">{peca.codigo}</span>
-                      </td>
-                      <td>{peca.quantidade ?? "—"}</td>
-                      <td>{peca.descricao || "—"}</td>
-                      <td>{peca.marca}</td>
-                      <td>{peca.modelo}</td>
-                      <td>
-                        <span className="badge badge--confianca">{ROTULO_TENSAO[peca.tensao] ?? peca.tensao}</span>
-                      </td>
-                      <td>{peca.validadoPor ?? "—"}</td>
-                      <td>{formatarData(peca.validadoEm)}</td>
-                      <td>
-                        <div className="table-actions">
-                          <button
-                            type="button"
-                            className="icon-btn"
-                            title="Editar"
-                            onClick={() => navigate(`/catalogos/${peca.catalogoId}/editar`)}
-                          >
-                            <IconEdit />
-                          </button>
-                          <button
-                            type="button"
-                            className="icon-btn icon-btn--danger"
-                            title="Excluir"
-                            onClick={() => setPecaParaExcluir(peca)}
-                          >
-                            <IconTrash />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+          {carregando ? (
+            <p className="table-card__estado">Carregando...</p>
+          ) : catalogos.length === 0 ? (
+            <p className="table-card__estado">Nenhum catálogo validado encontrado.</p>
+          ) : (
+            <div className="pendentes-lista">
+              {catalogos.map((catalogo) => (
+                <div className="pendente-card" key={catalogo.id}>
+                  <div className="pendente-card__topo">
+                    <button
+                      type="button"
+                      className="pendente-card__arquivo catalogo-card__titulo"
+                      onClick={() => navigate(`/catalogos/${catalogo.id}/visualizar`)}
+                      title="Ver peças deste catálogo"
+                    >
+                      <IconFile />
+                      <span>{descreverCatalogo(catalogo)}</span>
+                    </button>
+                    <div className="pendente-card__badges">
+                      {catalogo.tensao && (
+                        <span className="badge badge--confianca">{ROTULO_TENSAO[catalogo.tensao] ?? catalogo.tensao}</span>
+                      )}
+                      <span className="badge badge--confianca">
+                        {catalogo.totalPecas} {catalogo.totalPecas === 1 ? "peça" : "peças"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="pendente-card__info">
+                    {catalogo.nomeArquivo} · Validado por {catalogo.validadoPor ?? "—"} em {formatarData(catalogo.validadoEm)}
+                  </p>
+
+                  <div className="pendente-card__acoes">
+                    <button
+                      type="button"
+                      className="btn btn--outline btn--sm"
+                      onClick={() => navigate(`/catalogos/${catalogo.id}/visualizar`)}
+                    >
+                      <IconEye /> Ver peças
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--outline-info btn--sm"
+                      onClick={() => navigate(`/catalogos/${catalogo.id}/editar`)}
+                    >
+                      <IconEdit /> Editar
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--outline btn--sm"
+                      onClick={() => aoBaixarPdf(catalogo)}
+                      disabled={baixandoId === catalogo.id}
+                    >
+                      <IconDownload /> {baixandoId === catalogo.id ? "Abrindo..." : "Abrir PDF"}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--outline-danger btn--sm"
+                      onClick={() => setCatalogoParaExcluir(catalogo)}
+                    >
+                      <IconTrash /> Excluir
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {pecaParaExcluir && (
+      {catalogoParaExcluir && (
         <ConfirmModal
-          titulo="Excluir peça"
-          mensagem={`Deseja realmente excluir a peça "${pecaParaExcluir.codigo}"? Esta ação não pode ser desfeita.`}
+          titulo="Excluir catálogo"
+          mensagem={`Deseja realmente excluir o catálogo "${descreverCatalogo(catalogoParaExcluir)}" (${catalogoParaExcluir.totalPecas} peças)? As peças deixarão de aparecer nas consultas e o PDF será apagado. Esta ação não pode ser desfeita.`}
           confirmando={excluindo}
           textoConfirmar="Excluir"
           onConfirmar={confirmarExclusao}
-          onCancelar={() => setPecaParaExcluir(null)}
+          onCancelar={() => setCatalogoParaExcluir(null)}
         />
       )}
     </>

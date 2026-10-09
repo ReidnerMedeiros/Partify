@@ -258,6 +258,49 @@ class PrismaCatalogoRepository extends CatalogoRepository {
     });
   }
 
+  async listarCatalogosValidados({ empresaId, marca, modelo, codigo }) {
+    // Os filtros valem para uma mesma peça do catálogo (AND dentro do `some`).
+    const condicoesDePeca = [];
+    if (codigo) condicoesDePeca.push({ codigo: { contains: codigo, mode: "insensitive" } });
+    if (modelo) {
+      condicoesDePeca.push({ versaoTensao: { ferramenta: { modelo: { contains: modelo, mode: "insensitive" } } } });
+    }
+    if (marca) condicoesDePeca.push({ versaoTensao: { ferramenta: { marca: { nome: marca } } } });
+
+    const registros = await this.prisma.catalogo.findMany({
+      where: {
+        empresaId,
+        status: "VALIDADO",
+        ...(condicoesDePeca.length > 0 ? { pecas: { some: { AND: condicoesDePeca } } } : {}),
+      },
+      include: {
+        _count: { select: { pecas: true } },
+        pecas: {
+          take: 1,
+          include: { versaoTensao: { include: { ferramenta: { include: { marca: true } } } } },
+        },
+        validacoes: { orderBy: { validadoEm: "desc" }, take: 1, include: { usuario: true } },
+      },
+      orderBy: { criadoEm: "desc" },
+    });
+
+    return registros.map((registro) => {
+      const primeiraPeca = registro.pecas[0] ?? null;
+      const validacao = registro.validacoes[0] ?? null;
+      return {
+        id: registro.id,
+        nomeArquivo: registro.nomeArquivo,
+        marca: primeiraPeca?.versaoTensao.ferramenta.marca.nome ?? null,
+        modelo: primeiraPeca?.versaoTensao.ferramenta.modelo ?? null,
+        tensao: primeiraPeca?.versaoTensao.tensao ?? null,
+        totalPecas: registro._count.pecas,
+        validadoPor: validacao?.usuario?.login ?? null,
+        validadoEm: validacao?.validadoEm ?? null,
+        criadoEm: registro.criadoEm,
+      };
+    });
+  }
+
   async atualizarCatalogo(catalogoId, empresaId, dados) {
     const { marca, modelo, tensao, pecas } = dados;
 

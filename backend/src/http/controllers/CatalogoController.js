@@ -19,6 +19,8 @@ class CatalogoController {
     listarDocumentosPendentesUseCase,
     buscarDocumentoPendenteUseCase,
     excluirCatalogoUseCase,
+    listarCatalogosValidadosUseCase,
+    excluirCatalogoValidadoUseCase,
   }) {
     this.importarCatalogoUseCase = importarCatalogoUseCase;
     this.extrairDadosCatalogoUseCase = extrairDadosCatalogoUseCase;
@@ -31,6 +33,8 @@ class CatalogoController {
     this.listarDocumentosPendentesUseCase = listarDocumentosPendentesUseCase;
     this.buscarDocumentoPendenteUseCase = buscarDocumentoPendenteUseCase;
     this.excluirCatalogoUseCase = excluirCatalogoUseCase;
+    this.listarCatalogosValidadosUseCase = listarCatalogosValidadosUseCase;
+    this.excluirCatalogoValidadoUseCase = excluirCatalogoValidadoUseCase;
   }
 
   // POST /catalogos — RF06 (fluxo básico + A1) encadeado com RF07 (fluxo básico),
@@ -132,6 +136,36 @@ class CatalogoController {
     });
 
     return res.status(200).json({ pecas });
+  };
+
+  // GET /catalogos/validados — RF09/A2, visão por catálogo (um item por
+  // documento validado), com os mesmos filtros opcionais de marca/modelo/código.
+  listarCatalogos = async (req, res) => {
+    const { marca, modelo, codigo } = req.query;
+
+    const catalogos = await this.listarCatalogosValidadosUseCase.execute({
+      empresaId: req.auth.empresaId,
+      marca,
+      modelo,
+      codigo,
+    });
+
+    return res.status(200).json({ catalogos });
+  };
+
+  // DELETE /catalogos/:id — RF09, exclusão de um catálogo validado inteiro
+  // (peças, validações e PDF original), com confirmação em duas etapas já
+  // resolvida no frontend (RNF03).
+  excluirCatalogoValidado = async (req, res) => {
+    const { id } = req.params;
+
+    await this.excluirCatalogoValidadoUseCase.execute({
+      catalogoId: id,
+      empresaId: req.auth.empresaId,
+      usuarioId: req.auth.usuarioId,
+    });
+
+    return res.status(200).json({ mensagem: "Catálogo excluído com sucesso." });
   };
 
   // GET /catalogos/:id — RF09/A3, carrega o catálogo (já validado) pra tela

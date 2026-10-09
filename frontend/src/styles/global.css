@@ -982,6 +982,26 @@ a {
   margin-top: 14px;
 }
 
+/* RF09 — título clicável do cartão em "Consultar Catálogos" (abre a visualização). */
+.catalogo-card__titulo {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.catalogo-card__titulo:hover span {
+  text-decoration: underline;
+}
+
+.pendentes-lista + .pendentes-lista,
+.filtros-row + .pendentes-lista {
+  margin-top: 4px;
+}
+
 .badge--situacao-pendente {
   background: #fef3c7;
   color: #92400e;

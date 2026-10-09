@@ -107,7 +107,7 @@ function LogSistemaPage() {
         </div>
 
         <div className="content-card content-card--wide">
-          <h2>Log do Sistema</h2>
+          <h2>Histórico do Sistema</h2>
 
           {mensagemErro && <div className="alert alert--error">{mensagemErro}</div>}
 

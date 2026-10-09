@@ -173,6 +173,49 @@ class FakeCatalogoRepository {
       .filter((p) => !codigo || p.codigo?.toLowerCase().includes(codigo.toLowerCase()));
   }
 
+  async listarCatalogosValidados({ empresaId, marca, modelo, codigo }) {
+    const descreverPeca = (peca) => {
+      const versaoTensao = this.versoesTensao.find((v) => v.id === peca.versaoTensaoId);
+      const ferramenta = this.ferramentas.find((f) => f.id === versaoTensao?.ferramentaId);
+      const marcaRegistro = this.marcas.find((m) => m.id === ferramenta?.marcaId);
+      return { marca: marcaRegistro?.nome ?? null, modelo: ferramenta?.modelo ?? null, tensao: versaoTensao?.tensao ?? null };
+    };
+
+    return this.catalogos
+      .filter((c) => c.empresaId === empresaId && c.status === "VALIDADO")
+      .map((c) => {
+        const pecasDoCatalogo = this.pecas.filter((p) => p.catalogoId === c.id);
+        const validacao = this.validacoes
+          .filter((v) => v.catalogoId === c.id)
+          .sort((a, b) => new Date(b.validadoEm) - new Date(a.validadoEm))[0];
+        return {
+          pecasDoCatalogo,
+          item: {
+            id: c.id,
+            nomeArquivo: c.nomeArquivo,
+            ...(pecasDoCatalogo[0] ? descreverPeca(pecasDoCatalogo[0]) : { marca: null, modelo: null, tensao: null }),
+            totalPecas: pecasDoCatalogo.length,
+            validadoPor: validacao?.validadoPor ?? null,
+            validadoEm: validacao?.validadoEm ?? null,
+            criadoEm: c.criadoEm,
+          },
+        };
+      })
+      .filter(({ pecasDoCatalogo }) => {
+        if (!marca && !modelo && !codigo) return true;
+        return pecasDoCatalogo.some((peca) => {
+          const descricao = descreverPeca(peca);
+          return (
+            (!marca || descricao.marca === marca) &&
+            (!modelo || descricao.modelo?.toLowerCase().includes(modelo.toLowerCase())) &&
+            (!codigo || peca.codigo?.toLowerCase().includes(codigo.toLowerCase()))
+          );
+        });
+      })
+      .map(({ item }) => item)
+      .sort((a, b) => new Date(b.criadoEm) - new Date(a.criadoEm));
+  }
+
   async atualizarCatalogo(catalogoId, empresaId, dados) {
     const { marca, modelo, tensao, pecas } = dados;
     const versaoTensaoId = this.#resolverVersaoTensaoId({ empresaId, marca, modelo, tensao });
