@@ -859,6 +859,17 @@ a {
   flex: 1.4;
 }
 
+/* Em tela larga o documento acompanha a rolagem da página: quem confere peças
+   lá embaixo no formulário continua vendo o PDF ao lado, sem subir de volta.
+   O container já usa align-items: flex-start, requisito para o sticky valer.
+   Em telas estreitas (<= 900px) vira aba, então não precisa. */
+@media (min-width: 901px) {
+  .split-panel--documento {
+    position: sticky;
+    top: 16px;
+  }
+}
+
 .split-panel--dados {
   flex: 1;
 }
