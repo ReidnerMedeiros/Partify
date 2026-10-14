@@ -2,7 +2,7 @@ const { AtualizarCatalogoUseCase } = require("../../../../src/useCases/catalogo/
 const { FakeCatalogoRepository } = require("../../../fakes/FakeCatalogoRepository");
 const { FakeEmbeddingService } = require("../../../fakes/FakeEmbeddingService");
 const { FakeLogAuditoriaRepository } = require("../../../fakes/FakeLogAuditoriaRepository");
-const { NotFoundError, ValidationError } = require("../../../../src/domain/errors/DomainErrors");
+const { NotFoundError, ValidationError, ConflictError } = require("../../../../src/domain/errors/DomainErrors");
 
 const EMPRESA_ID = "empresa-1";
 
@@ -158,5 +158,55 @@ describe("AtualizarCatalogoUseCase — RF09/A3 (Atualização de registro)", () 
     const resultado = await useCase.execute(payloadValido(validado, { modelo: "GWS 9-125S Corrigido" }));
 
     expect(resultado.modelo).toBe("GWS 9-125S Corrigido");
+  });
+});
+
+describe("AtualizarCatalogoUseCase — ferramenta repetida", () => {
+  // Cria um segundo catálogo VALIDADO na mesma empresa (Bosch GWS 9-115, V127).
+  async function criarOutroCatalogoValidado(catalogoRepository) {
+    const outro = await catalogoRepository.criar({ empresaId: EMPRESA_ID, nomeArquivo: "outro.pdf", caminhoArquivo: "fake/outro.pdf" });
+    await catalogoRepository.registrarValidacao(outro.id, EMPRESA_ID, {
+      marca: "Bosch",
+      modelo: "GWS 9-115",
+      tensao: "V127",
+      pecas: [{ codigo: "9999", descricao: "Peça", posicaoVisual: "1" }],
+    });
+    return outro;
+  }
+
+  test("recusa mudar marca/modelo/tensão para os de outro catálogo validado da empresa", async () => {
+    const { useCase, catalogoRepository, validado } = await montarUseCaseComCatalogoValidado();
+    await criarOutroCatalogoValidado(catalogoRepository);
+
+    await expect(useCase.execute(payloadValido(validado, { modelo: "GWS 9-115" }))).rejects.toThrow(ConflictError);
+  });
+
+  test("editar só as peças (sem mudar a ferramenta) não é bloqueado", async () => {
+    const { useCase, catalogoRepository, validado } = await montarUseCaseComCatalogoValidado();
+    // Duplicado antigo já existente: mesma ferramenta do catálogo editado.
+    const duplicado = await catalogoRepository.criar({ empresaId: EMPRESA_ID, nomeArquivo: "dup.pdf", caminhoArquivo: "fake/dup.pdf" });
+    await catalogoRepository.registrarValidacao(duplicado.id, EMPRESA_ID, {
+      marca: "Bosch",
+      modelo: "GWS 9-125S",
+      tensao: "V127",
+      pecas: [{ codigo: "X", descricao: "Y", posicaoVisual: "1" }],
+    });
+
+    const resultado = await useCase.execute(
+      payloadValido(validado, {
+        pecas: validado.pecas.map((p) => ({ id: p.id, codigo: p.codigo, descricao: "Descrição ajustada", posicaoVisual: p.posicaoVisual })),
+      })
+    );
+
+    expect(resultado.pecas[0].descricao).toBe("Descrição ajustada");
+  });
+
+  test("mudar para uma ferramenta que ainda não existe é aceito", async () => {
+    const { useCase, catalogoRepository, validado } = await montarUseCaseComCatalogoValidado();
+    await criarOutroCatalogoValidado(catalogoRepository);
+
+    const resultado = await useCase.execute(payloadValido(validado, { modelo: "GWS 20-180" }));
+
+    expect(resultado.modelo).toBe("GWS 20-180");
   });
 });

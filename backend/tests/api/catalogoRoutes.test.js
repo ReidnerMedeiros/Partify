@@ -72,6 +72,52 @@ describe("POST /catalogos — RF06 + RF07 encadeados (upload multipart)", () => 
   });
 });
 
+describe("Duplicidade — mesmo PDF e mesma ferramenta", () => {
+  function enviarPdf(token, conteudo) {
+    return request(app)
+      .post("/catalogos")
+      .set("Authorization", `Bearer ${token}`)
+      .attach("arquivo", Buffer.from(conteudo), { filename: "catalogo.pdf", contentType: "application/pdf" });
+  }
+
+  test("importar o mesmo PDF duas vezes retorna 409 com o nome do catálogo existente", async () => {
+    const { token } = await cadastrarEmpresaELogar(app);
+    factories.extractionService.proximaResposta = respostaCompletaDaExtracao();
+    await enviarPdf(token, "%PDF-1.4 repetido");
+
+    const segunda = await enviarPdf(token, "%PDF-1.4 repetido");
+
+    expect(segunda.status).toBe(409);
+    expect(segunda.body.erro).toMatch(/já foi importado/);
+    expect(segunda.body.erro).toMatch(/catalogo\.pdf/);
+  });
+
+  test("validar um segundo catálogo da mesma ferramenta (marca, modelo e tensão) retorna 409", async () => {
+    const { token } = await cadastrarEmpresaELogar(app);
+    factories.extractionService.proximaResposta = respostaCompletaDaExtracao();
+    await importarEValidar(token);
+
+    const segundo = await enviarPdf(token, "%PDF-1.4 outro arquivo, mesma ferramenta");
+    const resposta = await request(app)
+      .put(`/catalogos/${segundo.body.catalogo.id}/validar`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        marca: "Bosch",
+        modelo: "GWS 9-125S",
+        tensao: "V127",
+        pecas: segundo.body.catalogo.pecas.map((peca) => ({
+          id: peca.id,
+          codigo: peca.codigo,
+          descricao: peca.descricao,
+          posicaoVisual: peca.posicaoVisual,
+        })),
+      });
+
+    expect(resposta.status).toBe(409);
+    expect(resposta.body.erro).toMatch(/já tem dados no sistema/);
+  });
+});
+
 describe("Ordem das rotas /catalogos/pendentes vs /catalogos/:id — RF09/RF10", () => {
   test("GET /catalogos/pendentes NÃO é capturada pela rota dinâmica /catalogos/:id (retorna a lista, não um erro de id inválido)", async () => {
     const { token } = await cadastrarEmpresaELogar(app);

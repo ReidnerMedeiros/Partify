@@ -1,4 +1,4 @@
-const { NotFoundError, ValidationError } = require("../../domain/errors/DomainErrors");
+const { NotFoundError, ValidationError, ConflictError } = require("../../domain/errors/DomainErrors");
 const { StatusCatalogo } = require("../../domain/enums/StatusCatalogo");
 const { EnumTensao } = require("../../domain/enums/EnumTensao");
 const { TipoAcao } = require("../../domain/enums/TipoAcao");
@@ -33,6 +33,26 @@ class AtualizarCatalogoUseCase {
     }
 
     this.#validar({ marca, modelo, tensao, pecas });
+
+    // Só checa duplicidade quando a identidade da ferramenta mudou: editar apenas
+    // as peças de um catálogo não deve ser bloqueado por um duplicado antigo.
+    const mesmo = (a, b) => (a ?? "").trim().toLowerCase() === (b ?? "").trim().toLowerCase();
+    const identidadeMudou = !mesmo(marca, atual.marca) || !mesmo(modelo, atual.modelo) || tensao !== atual.tensao;
+    if (identidadeMudou) {
+      const duplicado = await this.catalogoRepository.buscarValidadoDaFerramenta({
+        empresaId,
+        marca: marca.trim(),
+        modelo: modelo.trim(),
+        tensao,
+        ignorarCatalogoId: catalogoId,
+      });
+      if (duplicado) {
+        throw new ConflictError(
+          `Esta ferramenta (${marca.trim()} ${modelo.trim()}, ${tensao}) já tem dados no sistema, no catálogo "${duplicado.nomeArquivo}". ` +
+            "Exclua antes o catálogo existente ou corrija a marca, o modelo ou a tensão."
+        );
+      }
+    }
 
     // Captura o texto "antes" de cada peça (código + descrição) já aqui, antes
     // de chamar o repositório — mesmo motivo documentado em

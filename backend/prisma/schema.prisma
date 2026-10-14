@@ -228,6 +228,10 @@ model Catalogo {
   empresaId       String
   nomeArquivo     String
   caminhoArquivo  String
+  // SHA-256 (hex) do conteúdo do PDF, usado para recusar já na importação (RF06) o mesmo
+  // arquivo enviado duas vezes pela mesma empresa. Opcional: catálogos importados antes
+  // desta coluna existir ficam sem hash (e portanto fora dessa checagem).
+  hashArquivo     String?
   status          StatusCatalogo @default(PENDENTE_EXTRACAO)
   motivoPendencia String?
   camposAusentes  Json?
@@ -247,6 +251,7 @@ model Catalogo {
   validacoes Validacao[]
 
   @@index([empresaId])
+  @@index([empresaId, hashArquivo])
   @@map("catalogos")
 }
 

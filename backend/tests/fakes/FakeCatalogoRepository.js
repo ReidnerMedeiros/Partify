@@ -27,12 +27,34 @@ class FakeCatalogoRepository {
     this.validacoes = [];
   }
 
-  async criar({ empresaId, nomeArquivo, caminhoArquivo }) {
+  async buscarPorHashArquivo({ empresaId, hashArquivo }) {
+    return this.catalogos.find((c) => c.empresaId === empresaId && c.hashArquivo && c.hashArquivo === hashArquivo) ?? null;
+  }
+
+  async buscarValidadoDaFerramenta({ empresaId, marca, modelo, tensao, ignorarCatalogoId }) {
+    const igual = (a, b) => (a ?? "").toLowerCase() === (b ?? "").toLowerCase();
+    return (
+      this.catalogos.find((c) => {
+        if (c.empresaId !== empresaId || c.status !== "VALIDADO" || c.id === ignorarCatalogoId) return false;
+        return this.pecas
+          .filter((p) => p.catalogoId === c.id)
+          .some((p) => {
+            const versaoTensao = this.versoesTensao.find((v) => v.id === p.versaoTensaoId);
+            const ferramenta = this.ferramentas.find((f) => f.id === versaoTensao?.ferramentaId);
+            const marcaRegistro = this.marcas.find((m) => m.id === ferramenta?.marcaId);
+            return versaoTensao?.tensao === tensao && igual(ferramenta?.modelo, modelo) && igual(marcaRegistro?.nome, marca);
+          });
+      }) ?? null
+    );
+  }
+
+  async criar({ empresaId, nomeArquivo, caminhoArquivo, hashArquivo }) {
     const catalogo = {
       id: randomUUID(),
       empresaId,
       nomeArquivo,
       caminhoArquivo,
+      hashArquivo: hashArquivo ?? null,
       status: "PENDENTE_EXTRACAO",
       motivoPendencia: null,
       camposAusentes: null,

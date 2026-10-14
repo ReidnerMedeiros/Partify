@@ -3,7 +3,7 @@ const { FakeCatalogoRepository } = require("../../../fakes/FakeCatalogoRepositor
 const { FakeValidacaoRepository } = require("../../../fakes/FakeValidacaoRepository");
 const { FakeEmbeddingService } = require("../../../fakes/FakeEmbeddingService");
 const { FakeLogAuditoriaRepository } = require("../../../fakes/FakeLogAuditoriaRepository");
-const { NotFoundError, ValidationError } = require("../../../../src/domain/errors/DomainErrors");
+const { NotFoundError, ValidationError, ConflictError } = require("../../../../src/domain/errors/DomainErrors");
 
 const EMPRESA_ID = "empresa-1";
 
@@ -224,6 +224,102 @@ describe("ValidarCatalogoUseCase — RF08, fluxo básico (\"Validar e Salvar\") 
   test("uma falha ao gerar embedding não impede a validação de ser concluída com sucesso", async () => {
     const { useCase, resultadoExtraido, embeddingService } = await montarUseCaseComCatalogoExtraido();
     embeddingService.deveFalhar = true;
+
+    const resultado = await useCase.execute(payloadValido(resultadoExtraido));
+
+    expect(resultado.catalogo.status).toBe("VALIDADO");
+  });
+});
+
+describe("ValidarCatalogoUseCase — ferramenta repetida (mesma marca, modelo e tensão já validadas)", () => {
+  // Deixa na empresa informada um catálogo já VALIDADO da Bosch GWS 9-125S, V127.
+  async function criarCatalogoJaValidado(catalogoRepository, empresaId = EMPRESA_ID, nomeArquivo = "existente.pdf") {
+    const existente = await catalogoRepository.criar({ empresaId, nomeArquivo, caminhoArquivo: `fake/${nomeArquivo}` });
+    await catalogoRepository.registrarValidacao(existente.id, empresaId, {
+      marca: "Bosch",
+      modelo: "GWS 9-125S",
+      tensao: "V127",
+      pecas: [{ codigo: "1600A004GD", descricao: "Induzido 127V", posicaoVisual: "12" }],
+    });
+    return existente;
+  }
+
+  test("recusa salvar quando já existe catálogo validado da mesma ferramenta, e o catálogo continua pendente", async () => {
+    const { useCase, catalogoRepository, resultadoExtraido } = await montarUseCaseComCatalogoExtraido();
+    await criarCatalogoJaValidado(catalogoRepository);
+
+    await expect(useCase.execute(payloadValido(resultadoExtraido))).rejects.toThrow(ConflictError);
+
+    const aposTentativa = await catalogoRepository.buscarComPecas(resultadoExtraido.catalogo.id);
+    expect(aposTentativa.catalogo.status).toBe("PENDENTE_VALIDACAO");
+  });
+
+  test("a mensagem informa o catálogo que já contém a ferramenta", async () => {
+    const { useCase, catalogoRepository, resultadoExtraido } = await montarUseCaseComCatalogoExtraido();
+    await criarCatalogoJaValidado(catalogoRepository, EMPRESA_ID, "manual-original.pdf");
+
+    await expect(useCase.execute(payloadValido(resultadoExtraido))).rejects.toThrow(/manual-original\.pdf/);
+  });
+
+  test("a comparação ignora maiúsculas/minúsculas e espaços nas pontas de marca e modelo", async () => {
+    const { useCase, catalogoRepository, resultadoExtraido } = await montarUseCaseComCatalogoExtraido();
+    await criarCatalogoJaValidado(catalogoRepository);
+
+    await expect(
+      useCase.execute(payloadValido(resultadoExtraido, { marca: "  BOSCH ", modelo: "gws 9-125s" }))
+    ).rejects.toThrow(ConflictError);
+  });
+
+  test("não registra validação, log de auditoria nem embeddings quando recusa", async () => {
+    const { useCase, catalogoRepository, resultadoExtraido, validacaoRepository, logAuditoriaRepository, embeddingService } =
+      await montarUseCaseComCatalogoExtraido();
+    await criarCatalogoJaValidado(catalogoRepository);
+
+    await expect(useCase.execute(payloadValido(resultadoExtraido))).rejects.toThrow(ConflictError);
+
+    expect(validacaoRepository.registros ?? []).toHaveLength(0);
+    expect(logAuditoriaRepository.registros).toHaveLength(0);
+    expect(Object.keys(catalogoRepository.embeddings)).toHaveLength(0);
+    expect(embeddingService.chamadas ?? []).toHaveLength(0);
+  });
+
+  test("a mesma ferramenta com outra tensão é aceita (são versões diferentes)", async () => {
+    const { useCase, catalogoRepository, resultadoExtraido } = await montarUseCaseComCatalogoExtraido();
+    await criarCatalogoJaValidado(catalogoRepository);
+
+    const resultado = await useCase.execute(payloadValido(resultadoExtraido, { tensao: "V220" }));
+
+    expect(resultado.catalogo.status).toBe("VALIDADO");
+  });
+
+  test("outro modelo da mesma marca é aceito", async () => {
+    const { useCase, catalogoRepository, resultadoExtraido } = await montarUseCaseComCatalogoExtraido();
+    await criarCatalogoJaValidado(catalogoRepository);
+
+    const resultado = await useCase.execute(payloadValido(resultadoExtraido, { modelo: "GWS 9-115" }));
+
+    expect(resultado.catalogo.status).toBe("VALIDADO");
+  });
+
+  test("RNF11: catálogo validado de outra empresa não bloqueia", async () => {
+    const { useCase, catalogoRepository, resultadoExtraido } = await montarUseCaseComCatalogoExtraido();
+    await criarCatalogoJaValidado(catalogoRepository, "empresa-2");
+
+    const resultado = await useCase.execute(payloadValido(resultadoExtraido));
+
+    expect(resultado.catalogo.status).toBe("VALIDADO");
+  });
+
+  test("outro catálogo ainda pendente (não validado) da mesma ferramenta não bloqueia", async () => {
+    const { useCase, catalogoRepository, resultadoExtraido } = await montarUseCaseComCatalogoExtraido();
+    const pendente = await catalogoRepository.criar({ empresaId: EMPRESA_ID, nomeArquivo: "outro.pdf", caminhoArquivo: "fake/outro.pdf" });
+    await catalogoRepository.registrarResultadoExtracao(pendente.id, EMPRESA_ID, {
+      marca: "Bosch",
+      modelo: "GWS 9-125S",
+      tensao: "V127",
+      pecas: [{ codigo: "1600A004GD", descricao: "Induzido 127V", posicaoVisual: "12", confianca: 90 }],
+      status: "PENDENTE_VALIDACAO",
+    });
 
     const resultado = await useCase.execute(payloadValido(resultadoExtraido));
 

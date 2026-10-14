@@ -9,6 +9,7 @@ function paraEntidadeCatalogo(registro) {
     empresaId: registro.empresaId,
     nomeArquivo: registro.nomeArquivo,
     caminhoArquivo: registro.caminhoArquivo,
+    hashArquivo: registro.hashArquivo,
     status: registro.status,
     motivoPendencia: registro.motivoPendencia,
     camposAusentes: registro.camposAusentes,
@@ -115,9 +116,40 @@ class PrismaCatalogoRepository extends CatalogoRepository {
     this.prisma = prisma;
   }
 
-  async criar({ empresaId, nomeArquivo, caminhoArquivo }) {
+  async criar({ empresaId, nomeArquivo, caminhoArquivo, hashArquivo }) {
     const registro = await this.prisma.catalogo.create({
-      data: { empresaId, nomeArquivo, caminhoArquivo },
+      data: { empresaId, nomeArquivo, caminhoArquivo, hashArquivo: hashArquivo ?? null },
+    });
+    return paraEntidadeCatalogo(registro);
+  }
+
+  async buscarPorHashArquivo({ empresaId, hashArquivo }) {
+    const registro = await this.prisma.catalogo.findFirst({
+      where: { empresaId, hashArquivo },
+      orderBy: { criadoEm: "asc" },
+    });
+    return paraEntidadeCatalogo(registro);
+  }
+
+  async buscarValidadoDaFerramenta({ empresaId, marca, modelo, tensao, ignorarCatalogoId }) {
+    const registro = await this.prisma.catalogo.findFirst({
+      where: {
+        empresaId,
+        status: "VALIDADO",
+        ...(ignorarCatalogoId ? { id: { not: ignorarCatalogoId } } : {}),
+        pecas: {
+          some: {
+            versaoTensao: {
+              tensao,
+              ferramenta: {
+                modelo: { equals: modelo, mode: "insensitive" },
+                marca: { nome: { equals: marca, mode: "insensitive" } },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { criadoEm: "asc" },
     });
     return paraEntidadeCatalogo(registro);
   }

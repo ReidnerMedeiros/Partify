@@ -81,6 +81,13 @@ backend/dev-server.log
 /prompts/
 /VISAO_GERAL_PROJETO.md
 
+# Atividade da disciplina ESW441 (Projeto N2): NÃO faz parte do Partify, fica só
+# localmente e será apagada depois. Ver ATIVIDADE_N2_FORA_DO_ESCOPO.md.
+/ATIVIDADE_N2_FORA_DO_ESCOPO.md
+/PLANO_PROJETO_N2.md
+/backend/n2/
+/backend/scripts/baselineSessao.js
+
 # Config local do Claude Code (específica desta máquina/usuário)
 .claude/
 

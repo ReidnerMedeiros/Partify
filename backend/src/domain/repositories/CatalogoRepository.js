@@ -10,8 +10,27 @@
  * fabricante/modelo).
  */
 class CatalogoRepository {
-  async criar(_dados /* { empresaId, nomeArquivo, caminhoArquivo } */) {
+  async criar(_dados /* { empresaId, nomeArquivo, caminhoArquivo, hashArquivo } */) {
     throw new Error("CatalogoRepository.criar não implementado.");
+  }
+
+  /**
+   * RF06 — detecção de arquivo repetido. Retorna o catálogo mais antigo da
+   * empresa cujo PDF tem o mesmo hash (SHA-256), ou null se não houver.
+   */
+  async buscarPorHashArquivo(_filtros /* { empresaId, hashArquivo } */) {
+    throw new Error("CatalogoRepository.buscarPorHashArquivo não implementado.");
+  }
+
+  /**
+   * RF08/RF09 — detecção de ferramenta repetida. Retorna um catálogo VALIDADO da
+   * empresa que já contém peças da mesma marca, modelo e tensão (comparação sem
+   * diferenciar maiúsculas de minúsculas), ou null se não houver. Quando
+   * `ignorarCatalogoId` é informado, esse catálogo é desconsiderado (é o que está
+   * sendo validado/editado agora).
+   */
+  async buscarValidadoDaFerramenta(_filtros /* { empresaId, marca, modelo, tensao, ignorarCatalogoId } */) {
+    throw new Error("CatalogoRepository.buscarValidadoDaFerramenta não implementado.");
   }
 
   /**

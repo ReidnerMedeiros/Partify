@@ -2,7 +2,7 @@ const { ImportarCatalogoUseCase } = require("../../../../src/useCases/catalogo/I
 const { FakeCatalogoRepository } = require("../../../fakes/FakeCatalogoRepository");
 const { FakeFileStorageService } = require("../../../fakes/FakeFileStorageService");
 const { FakeLogAuditoriaRepository } = require("../../../fakes/FakeLogAuditoriaRepository");
-const { ValidationError } = require("../../../../src/domain/errors/DomainErrors");
+const { ValidationError, ConflictError } = require("../../../../src/domain/errors/DomainErrors");
 
 function montarUseCase() {
   const catalogoRepository = new FakeCatalogoRepository();
@@ -109,5 +109,58 @@ describe("ImportarCatalogoUseCase — RF06, fluxo básico + A1 (marca/modelo opc
     expect(logAuditoriaRepository.registros[0].tipoAcao).toBe("UPLOAD_VISTA_EXPLODIDA");
     expect(logAuditoriaRepository.registros[0].usuarioId).toBe("usuario-42");
     expect(logAuditoriaRepository.registros[0].registroAfetado).toBe(catalogo.id);
+  });
+});
+
+describe("ImportarCatalogoUseCase — arquivo repetido (mesmo PDF na mesma empresa)", () => {
+  test("recusa o mesmo conteúdo importado duas vezes, mesmo com outro nome de arquivo", async () => {
+    const { useCase, catalogoRepository } = montarUseCase();
+    await useCase.execute(dadosValidos());
+
+    await expect(useCase.execute(dadosValidos({ nomeArquivo: "copia-do-mesmo.pdf" }))).rejects.toThrow(ConflictError);
+    expect(catalogoRepository.catalogos).toHaveLength(1);
+  });
+
+  test("a mensagem informa o nome do catálogo já existente", async () => {
+    const { useCase } = montarUseCase();
+    await useCase.execute(dadosValidos({ nomeArquivo: "original.pdf" }));
+
+    await expect(useCase.execute(dadosValidos({ nomeArquivo: "outro.pdf" }))).rejects.toThrow(/original\.pdf/);
+  });
+
+  test("a recusa acontece antes de gravar o arquivo no storage e antes do log de auditoria", async () => {
+    const { useCase, fileStorageService, logAuditoriaRepository } = montarUseCase();
+    await useCase.execute(dadosValidos());
+
+    await expect(useCase.execute(dadosValidos())).rejects.toThrow(ConflictError);
+
+    expect(fileStorageService.arquivos.size).toBe(1);
+    expect(logAuditoriaRepository.registros).toHaveLength(1);
+  });
+
+  test("conteúdos diferentes são aceitos normalmente", async () => {
+    const { useCase, catalogoRepository } = montarUseCase();
+    await useCase.execute(dadosValidos());
+
+    await useCase.execute(dadosValidos({ arquivoBuffer: Buffer.from("%PDF-1.4 outro conteúdo") }));
+
+    expect(catalogoRepository.catalogos).toHaveLength(2);
+  });
+
+  test("RNF11: o mesmo PDF pode ser importado por outra empresa", async () => {
+    const { useCase, catalogoRepository } = montarUseCase();
+    await useCase.execute(dadosValidos({ empresaId: "empresa-1" }));
+
+    await useCase.execute(dadosValidos({ empresaId: "empresa-2" }));
+
+    expect(catalogoRepository.catalogos).toHaveLength(2);
+  });
+
+  test("depois de excluir o catálogo existente, o mesmo PDF pode ser importado de novo", async () => {
+    const { useCase, catalogoRepository } = montarUseCase();
+    const { catalogo } = await useCase.execute(dadosValidos());
+    await catalogoRepository.excluirCatalogo(catalogo.id);
+
+    await expect(useCase.execute(dadosValidos())).resolves.toBeDefined();
   });
 });

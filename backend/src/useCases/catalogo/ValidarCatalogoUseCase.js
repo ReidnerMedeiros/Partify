@@ -1,4 +1,4 @@
-const { NotFoundError, ValidationError } = require("../../domain/errors/DomainErrors");
+const { NotFoundError, ValidationError, ConflictError } = require("../../domain/errors/DomainErrors");
 const { EnumTensao } = require("../../domain/enums/EnumTensao");
 const { TipoAcao } = require("../../domain/enums/TipoAcao");
 const { normalizarQuantidade } = require("../../domain/validators/quantidadePecaValidator");
@@ -33,6 +33,23 @@ class ValidarCatalogoUseCase {
     }
 
     this.#validar({ marca, modelo, tensao, pecas });
+
+    // Ferramenta repetida: já existe um catálogo VALIDADO desta empresa com a mesma
+    // marca, modelo e tensão. Salvar duplicaria todas as peças (busca e consulta
+    // técnica passariam a retornar resultados repetidos), então é recusado.
+    const duplicado = await this.catalogoRepository.buscarValidadoDaFerramenta({
+      empresaId,
+      marca: marca.trim(),
+      modelo: modelo.trim(),
+      tensao,
+      ignorarCatalogoId: catalogoId,
+    });
+    if (duplicado) {
+      throw new ConflictError(
+        `Esta ferramenta (${marca.trim()} ${modelo.trim()}, ${tensao}) já tem dados no sistema, no catálogo "${duplicado.nomeArquivo}". ` +
+          "Para salvar este, exclua antes o catálogo existente ou corrija a marca, o modelo ou a tensão."
+      );
+    }
 
     const resultado = await this.catalogoRepository.registrarValidacao(catalogoId, empresaId, {
       marca: marca.trim(),

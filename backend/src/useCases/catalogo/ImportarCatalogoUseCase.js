@@ -1,4 +1,5 @@
-const { ValidationError } = require("../../domain/errors/DomainErrors");
+const { createHash } = require("crypto");
+const { ValidationError, ConflictError } = require("../../domain/errors/DomainErrors");
 const { TipoAcao } = require("../../domain/enums/TipoAcao");
 
 const MIME_TYPE_PDF = "application/pdf";
@@ -20,6 +21,18 @@ class ImportarCatalogoUseCase {
   async execute({ arquivoBuffer, nomeArquivo, mimeType, marca, modelo, usuarioId, empresaId }) {
     this.#validar({ arquivoBuffer, mimeType });
 
+    // Arquivo repetido: o mesmo PDF (mesmo conteúdo, mesmo com outro nome) já foi
+    // importado por esta empresa. Recusa antes de gravar no storage e de gastar
+    // uma chamada de IA. Só vale dentro da própria empresa (RNF11).
+    const hashArquivo = createHash("sha256").update(arquivoBuffer).digest("hex");
+    const existente = await this.catalogoRepository.buscarPorHashArquivo({ empresaId, hashArquivo });
+    if (existente) {
+      throw new ConflictError(
+        `Este arquivo já foi importado (catálogo "${existente.nomeArquivo}"). ` +
+          "Para importá-lo novamente, exclua primeiro o catálogo existente."
+      );
+    }
+
     const caminhoArquivo = await this.fileStorageService.salvar({
       buffer: arquivoBuffer,
       nomeOriginal: nomeArquivo,
@@ -29,7 +42,7 @@ class ImportarCatalogoUseCase {
     // RNF11 — o catálogo nasce já vinculado à empresa de quem fez o upload;
     // toda a cadeia Marca/Ferramenta/VersaoTensao/Peca resolvida a partir dele
     // (RF07/RF08) herda esse mesmo empresaId.
-    const catalogo = await this.catalogoRepository.criar({ empresaId, nomeArquivo, caminhoArquivo });
+    const catalogo = await this.catalogoRepository.criar({ empresaId, nomeArquivo, caminhoArquivo, hashArquivo });
 
     await this.logAuditoriaRepository.registrar({
       usuarioId,

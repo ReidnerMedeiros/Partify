@@ -19,6 +19,7 @@ class Catalogo {
     empresaId,
     nomeArquivo,
     caminhoArquivo,
+    hashArquivo,
     status,
     motivoPendencia,
     camposAusentes,
@@ -31,6 +32,7 @@ class Catalogo {
     this.empresaId = empresaId;
     this.nomeArquivo = nomeArquivo;
     this.caminhoArquivo = caminhoArquivo;
+    this.hashArquivo = hashArquivo ?? null;
     this.status = status ?? StatusCatalogo.PENDENTE_EXTRACAO;
     this.motivoPendencia = motivoPendencia ?? null;
     this.camposAusentes = camposAusentes ?? null;
