@@ -108,6 +108,37 @@ async function resolverVersaoTensaoId(tx, { empresaId, marca, modelo, tensao }) 
 }
 
 /**
+ * Atualiza várias peças existentes com UM único UPDATE (via unnest), em vez de um
+ * `tx.peca.update` por peça. Contra o Supabase remoto cada ida e volta custa algumas
+ * centenas de ms: um catálogo com ~90 peças passava dos 15 s da transação, o Prisma
+ * a encerrava e as demais queries falhavam com P2028 "Transaction not found", e a
+ * retentativa repetia o mesmo problema. Com um UPDATE só, a transação fica curta.
+ * Não mexe no embedding (coluna separada, gravada depois por atualizarEmbeddingPeca).
+ */
+async function atualizarPecasEmLote(tx, { pecas, versaoTensaoId, empresaId }) {
+  if (pecas.length === 0) return;
+
+  const ids = pecas.map((p) => p.id);
+  const codigos = pecas.map((p) => p.codigo);
+  const descricoes = pecas.map((p) => p.descricao ?? null);
+  const posicoes = pecas.map((p) => p.posicaoVisual ?? null);
+  const quantidades = pecas.map((p) => p.quantidade ?? null);
+
+  await tx.$executeRaw`
+    UPDATE pecas AS p
+    SET codigo = v.codigo,
+        descricao = v.descricao,
+        "posicaoVisual" = v.posicao,
+        quantidade = v.quantidade,
+        "versaoTensaoId" = ${versaoTensaoId},
+        "atualizadoEm" = NOW()
+    FROM unnest(${ids}::text[], ${codigos}::text[], ${descricoes}::text[], ${posicoes}::text[], ${quantidades}::int[])
+      AS v(id, codigo, descricao, posicao, quantidade)
+    WHERE p.id = v.id AND p."empresaId" = ${empresaId}
+  `;
+}
+
+/**
  * Implementação concreta de CatalogoRepository usando Prisma/PostgreSQL (Supabase).
  */
 class PrismaCatalogoRepository extends CatalogoRepository {
@@ -211,18 +242,7 @@ class PrismaCatalogoRepository extends CatalogoRepository {
       const pecasExistentes = pecas.filter((peca) => peca.id);
       const pecasNovas = pecas.filter((peca) => !peca.id);
 
-      for (const peca of pecasExistentes) {
-        await tx.peca.update({
-          where: { id: peca.id },
-          data: {
-            codigo: peca.codigo,
-            descricao: peca.descricao ?? null,
-            posicaoVisual: peca.posicaoVisual ?? null,
-            quantidade: peca.quantidade ?? null,
-            versaoTensaoId,
-          },
-        });
-      }
+      await atualizarPecasEmLote(tx, { pecas: pecasExistentes, versaoTensaoId, empresaId });
 
       if (pecasNovas.length > 0) {
         await tx.peca.createMany({
@@ -353,18 +373,7 @@ class PrismaCatalogoRepository extends CatalogoRepository {
       const pecasParaAtualizar = pecas.filter((peca) => peca.id);
       const pecasNovas = pecas.filter((peca) => !peca.id);
 
-      for (const peca of pecasParaAtualizar) {
-        await tx.peca.update({
-          where: { id: peca.id },
-          data: {
-            codigo: peca.codigo,
-            descricao: peca.descricao ?? null,
-            posicaoVisual: peca.posicaoVisual ?? null,
-            quantidade: peca.quantidade ?? null,
-            versaoTensaoId,
-          },
-        });
-      }
+      await atualizarPecasEmLote(tx, { pecas: pecasParaAtualizar, versaoTensaoId, empresaId });
 
       if (pecasNovas.length > 0) {
         await tx.peca.createMany({
