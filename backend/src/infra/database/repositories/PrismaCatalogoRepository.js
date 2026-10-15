@@ -198,6 +198,12 @@ class PrismaCatalogoRepository extends CatalogoRepository {
         versaoTensaoId = await resolverVersaoTensaoId(tx, { empresaId, marca, modelo, tensao });
       }
 
+      // Reextração (nova tentativa, "Reenviar para IA"): descarta as peças que uma
+      // extração anterior deste mesmo catálogo tenha gravado, senão elas ficariam
+      // duplicadas com as novas. O caso de uso só reprocessa catálogos ainda não
+      // validados, então nunca apaga peças já confirmadas por um humano.
+      await tx.peca.deleteMany({ where: { catalogoId } });
+
       if (versaoTensaoId && pecas?.length) {
         await tx.peca.createMany({
           data: pecas.map((peca) => ({

@@ -1,4 +1,4 @@
-const { NotFoundError, ServiceUnavailableError, ValidationError } = require("../../domain/errors/DomainErrors");
+const { NotFoundError, ServiceUnavailableError, ValidationError, ConflictError } = require("../../domain/errors/DomainErrors");
 const { StatusCatalogo } = require("../../domain/enums/StatusCatalogo");
 const { TipoAcao } = require("../../domain/enums/TipoAcao");
 
@@ -49,6 +49,12 @@ class ExtrairDadosCatalogoUseCase {
     // (AtualizarUsuarioUseCase) para checagem de posse multi-tenant.
     if (!resultadoAtual || resultadoAtual.catalogo.empresaId !== empresaId) {
       throw new NotFoundError("Catálogo não encontrado.");
+    }
+
+    // Um catálogo já validado por um humano não pode ser reprocessado: a nova
+    // extração substituiria as peças confirmadas.
+    if (resultadoAtual.catalogo.status === StatusCatalogo.VALIDADO) {
+      throw new ConflictError("Este catálogo já foi validado e não pode ser reenviado para a IA.");
     }
 
     const arquivoBuffer = await this.fileStorageService.obterBuffer(resultadoAtual.catalogo.caminhoArquivo);

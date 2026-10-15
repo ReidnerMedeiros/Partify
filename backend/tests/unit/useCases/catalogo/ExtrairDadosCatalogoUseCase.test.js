@@ -3,7 +3,7 @@ const { FakeCatalogoRepository } = require("../../../fakes/FakeCatalogoRepositor
 const { FakeFileStorageService } = require("../../../fakes/FakeFileStorageService");
 const { FakeExtractionService } = require("../../../fakes/FakeExtractionService");
 const { FakeLogAuditoriaRepository } = require("../../../fakes/FakeLogAuditoriaRepository");
-const { NotFoundError, ServiceUnavailableError, ValidationError } = require("../../../../src/domain/errors/DomainErrors");
+const { NotFoundError, ServiceUnavailableError, ValidationError, ConflictError } = require("../../../../src/domain/errors/DomainErrors");
 
 const EMPRESA_ID = "empresa-1";
 
@@ -264,6 +264,60 @@ describe("ExtrairDadosCatalogoUseCase — RF07, fluxo básico + A1 + E1 + E2", (
     expect(catalogoRepository.marcas).toHaveLength(1);
     expect(catalogoRepository.ferramentas).toHaveLength(1);
     expect(catalogoRepository.versoesTensao).toHaveLength(1);
+  });
+
+  test("reextrair o mesmo catálogo substitui as peças da extração anterior, sem duplicar", async () => {
+    const { useCase, extractionService, catalogoRepository, catalogo } = await montarUseCaseComCatalogo();
+    extractionService.proximaResposta = respostaCompleta();
+    await useCase.execute({ catalogoId: catalogo.id, usuarioId: "usuario-1", empresaId: EMPRESA_ID });
+
+    const resultado = await useCase.execute({ catalogoId: catalogo.id, usuarioId: "usuario-1", empresaId: EMPRESA_ID });
+
+    expect(resultado.pecas).toHaveLength(2);
+    expect(catalogoRepository.pecas.filter((p) => p.catalogoId === catalogo.id)).toHaveLength(2);
+  });
+
+  test("a reextração usa o resultado novo (e não acumula com o anterior)", async () => {
+    const { useCase, extractionService, catalogo } = await montarUseCaseComCatalogo();
+    extractionService.proximaResposta = respostaCompleta();
+    await useCase.execute({ catalogoId: catalogo.id, usuarioId: "usuario-1", empresaId: EMPRESA_ID });
+
+    extractionService.proximaResposta = respostaCompleta({
+      pecas: [{ codigo: "9999999999", descricao: "Peça nova", posicaoVisual: "1", confianca: 90 }],
+    });
+    const resultado = await useCase.execute({ catalogoId: catalogo.id, usuarioId: "usuario-1", empresaId: EMPRESA_ID });
+
+    expect(resultado.pecas.map((p) => p.codigo)).toEqual(["9999999999"]);
+  });
+
+  test("reextrair não afeta as peças de outros catálogos", async () => {
+    const { useCase, extractionService, catalogoRepository, catalogo } = await montarUseCaseComCatalogo();
+    extractionService.proximaResposta = respostaCompleta();
+    await useCase.execute({ catalogoId: catalogo.id, usuarioId: "usuario-1", empresaId: EMPRESA_ID });
+    const outro = await catalogoRepository.criar({ empresaId: EMPRESA_ID, nomeArquivo: "outro.pdf", caminhoArquivo: "fake/9-outro.pdf" });
+    await useCase.execute({ catalogoId: outro.id, usuarioId: "usuario-1", empresaId: EMPRESA_ID });
+
+    await useCase.execute({ catalogoId: catalogo.id, usuarioId: "usuario-1", empresaId: EMPRESA_ID });
+
+    expect(catalogoRepository.pecas.filter((p) => p.catalogoId === outro.id)).toHaveLength(2);
+    expect(catalogoRepository.pecas.filter((p) => p.catalogoId === catalogo.id)).toHaveLength(2);
+  });
+
+  test("recusa reextrair um catálogo já validado (as peças confirmadas não podem ser substituídas)", async () => {
+    const { useCase, extractionService, catalogoRepository, catalogo } = await montarUseCaseComCatalogo();
+    extractionService.proximaResposta = respostaCompleta();
+    const extraido = await useCase.execute({ catalogoId: catalogo.id, usuarioId: "usuario-1", empresaId: EMPRESA_ID });
+    await catalogoRepository.registrarValidacao(catalogo.id, EMPRESA_ID, {
+      marca: "Bosch",
+      modelo: "GWS 9-125S",
+      tensao: "V127",
+      pecas: extraido.pecas.map((p) => ({ id: p.id, codigo: p.codigo, descricao: p.descricao, posicaoVisual: p.posicaoVisual })),
+    });
+
+    await expect(
+      useCase.execute({ catalogoId: catalogo.id, usuarioId: "usuario-1", empresaId: EMPRESA_ID })
+    ).rejects.toThrow(ConflictError);
+    expect(catalogoRepository.pecas.filter((p) => p.catalogoId === catalogo.id)).toHaveLength(2);
   });
 
   test("RNF11: duas empresas com marca/modelo/tensão idênticos NÃO reaproveitam Marca/Ferramenta/VersaoTensao entre si", async () => {

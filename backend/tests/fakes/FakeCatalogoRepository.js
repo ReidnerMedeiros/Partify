@@ -98,6 +98,10 @@ class FakeCatalogoRepository {
       versaoTensaoId = this.#resolverVersaoTensaoId({ empresaId, marca, modelo, tensao });
     }
 
+    // Reextração: descarta as peças de uma extração anterior deste catálogo
+    // (igual ao PrismaCatalogoRepository), para não duplicá-las.
+    this.pecas = this.pecas.filter((p) => p.catalogoId !== catalogoId);
+
     if (versaoTensaoId && pecas?.length) {
       for (const peca of pecas) {
         this.pecas.push({
