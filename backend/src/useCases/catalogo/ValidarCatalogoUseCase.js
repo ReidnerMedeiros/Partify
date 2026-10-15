@@ -82,13 +82,23 @@ class ValidarCatalogoUseCase {
   }
 
   async #gerarEmbeddings(pecas) {
+    // GERAR_EMBEDDINGS_NA_VALIDACAO=false: pula; os vetores saem depois por
+    // `npm run embeddings:faltantes`.
+    if (this.embeddingService.desativado) return;
+
     for (const peca of pecas) {
       try {
         const texto = [peca.codigo, peca.descricao].filter(Boolean).join(" — ");
         const vetor = await this.embeddingService.gerarEmbedding(texto);
         await this.catalogoRepository.atualizarEmbeddingPeca(peca.id, vetor);
       } catch (erro) {
-        console.error(`[embedding-falhou] peça ${peca.id}:`, erro.message); // eslint-disable-line no-console
+        console.error(`[embedding-falhou] peça ${peca.id}:`, String(erro.message).slice(0, 200)); // eslint-disable-line no-console
+        if (erro.esgotouCota) {
+          // Cota diária da Gemini API esgotada: as demais peças falhariam igual.
+          // Ficam sem vetor até rodar `npm run embeddings:faltantes`.
+          console.error("[embedding-falhou] cota diária esgotada; as peças restantes ficam sem embedding."); // eslint-disable-line no-console
+          break;
+        }
       }
     }
   }

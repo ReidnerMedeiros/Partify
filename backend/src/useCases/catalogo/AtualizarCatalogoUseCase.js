@@ -96,6 +96,10 @@ class AtualizarCatalogoUseCase {
   }
 
   async #atualizarEmbeddings(pecas, textoAnteriorPorId) {
+    // GERAR_EMBEDDINGS_NA_VALIDACAO=false: pula; os vetores saem depois por
+    // `npm run embeddings:faltantes`.
+    if (this.embeddingService.desativado) return;
+
     for (const peca of pecas) {
       const textoNovo = [peca.codigo, peca.descricao].filter(Boolean).join(" — ");
       if (textoAnteriorPorId.get(peca.id) === textoNovo) continue;
@@ -104,7 +108,11 @@ class AtualizarCatalogoUseCase {
         const vetor = await this.embeddingService.gerarEmbedding(textoNovo);
         await this.catalogoRepository.atualizarEmbeddingPeca(peca.id, vetor);
       } catch (erro) {
-        console.error(`[embedding-falhou] peça ${peca.id}:`, erro.message); // eslint-disable-line no-console
+        console.error(`[embedding-falhou] peça ${peca.id}:`, String(erro.message).slice(0, 200)); // eslint-disable-line no-console
+        if (erro.esgotouCota) {
+          console.error("[embedding-falhou] cota diária esgotada; as peças restantes ficam sem embedding."); // eslint-disable-line no-console
+          break;
+        }
       }
     }
   }

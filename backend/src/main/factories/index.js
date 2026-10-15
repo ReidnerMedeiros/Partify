@@ -28,6 +28,7 @@ const { SupabaseStorageService } = require("../../infra/storage/SupabaseStorageS
 // clara em vez de concentrar tudo no Agente Extrator (decisão #25 em CONTEXTO.md).
 const { GeminiExtractionService } = require("../../agentesIA/AgenteExtrator/GeminiExtractionService");
 const { GeminiEmbeddingService: GeminiEmbeddingServiceValidador } = require("../../agentesIA/AgenteValidador/GeminiEmbeddingService");
+const { EmbeddingDesativadoService } = require("../../agentesIA/AgenteValidador/EmbeddingDesativadoService");
 const { GeminiEmbeddingService: GeminiEmbeddingServiceConsulta } = require("../../agentesIA/AgenteConsulta/GeminiEmbeddingService");
 const { GeminiRAGService } = require("../../agentesIA/AgenteConsulta/GeminiRAGService");
 
@@ -132,10 +133,16 @@ const extractionService = new GeminiExtractionService({
 });
 // RF08/RF09 — Agente Validador: gera o embedding só depois da confirmação
 // humana (decisão #16). Instância própria, isolada do Agente de Consulta.
-const embeddingServiceValidador = new GeminiEmbeddingServiceValidador({
-  apiKey: process.env.GEMINI_API_KEY,
-  model: process.env.GEMINI_EMBEDDING_MODEL,
-});
+// GERAR_EMBEDDINGS_NA_VALIDACAO=false (opcional) pula a geração de vetores ao validar/
+// editar catálogos, para popular o banco sem gastar a cota da Gemini; os vetores são
+// criados depois com `npm run embeddings:faltantes`. Qualquer outro valor mantém o normal.
+const embeddingServiceValidador =
+  process.env.GERAR_EMBEDDINGS_NA_VALIDACAO === "false"
+    ? new EmbeddingDesativadoService()
+    : new GeminiEmbeddingServiceValidador({
+        apiKey: process.env.GEMINI_API_KEY,
+        model: process.env.GEMINI_EMBEDDING_MODEL,
+      });
 // RF11/RF12 — Agente de Consulta: instância própria (não reaproveita a do
 // Agente Validador) pra vetorizar termo de busca/pergunta — mesmo
 // GEMINI_EMBEDDING_MODEL das duas, senão os vetores não seriam comparáveis

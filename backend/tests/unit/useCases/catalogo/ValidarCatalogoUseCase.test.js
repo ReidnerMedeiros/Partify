@@ -221,6 +221,33 @@ describe("ValidarCatalogoUseCase — RF08, fluxo básico (\"Validar e Salvar\") 
     expect(catalogoRepository.embeddings[resultado.pecas[0].id]).toBeDefined();
   });
 
+  test("com embeddings desativados valida normalmente e não chama o serviço de embedding", async () => {
+    const { useCase, resultadoExtraido, embeddingService, catalogoRepository } = await montarUseCaseComCatalogoExtraido();
+    embeddingService.desativado = true;
+
+    const resultado = await useCase.execute(payloadValido(resultadoExtraido));
+
+    expect(resultado.catalogo.status).toBe("VALIDADO");
+    expect(embeddingService.chamadas).toHaveLength(0);
+    expect(Object.keys(catalogoRepository.embeddings)).toHaveLength(0);
+  });
+
+  test("cota diária de embeddings esgotada: valida mesmo assim e para de chamar a API após a primeira falha", async () => {
+    const { useCase, resultadoExtraido, embeddingService } = await montarUseCaseComCatalogoExtraido();
+    embeddingService.deveEsgotarCota = true;
+    const pecas = [
+      ...resultadoExtraido.pecas.map((p) => ({ id: p.id, codigo: p.codigo, descricao: p.descricao, posicaoVisual: p.posicaoVisual })),
+      { codigo: "NOVA-1", descricao: "Peça nova 1", posicaoVisual: "20" },
+      { codigo: "NOVA-2", descricao: "Peça nova 2", posicaoVisual: "21" },
+    ];
+
+    const resultado = await useCase.execute(payloadValido(resultadoExtraido, { pecas }));
+
+    expect(resultado.catalogo.status).toBe("VALIDADO");
+    expect(resultado.pecas).toHaveLength(3);
+    expect(embeddingService.chamadas).toHaveLength(1);
+  });
+
   test("uma falha ao gerar embedding não impede a validação de ser concluída com sucesso", async () => {
     const { useCase, resultadoExtraido, embeddingService } = await montarUseCaseComCatalogoExtraido();
     embeddingService.deveFalhar = true;
