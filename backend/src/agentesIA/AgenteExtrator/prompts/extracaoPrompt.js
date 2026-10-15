@@ -72,6 +72,11 @@ mesma linha. Por exemplo, na linha "2 | 1 | 9 618 085 763 | SAPATA POLAR", a
 posição é 2, a quantidade é 1 e o código é "9 618 085 763" (e não "1 9 618 085
 763"). Em caso de dúvida sobre qual coluna é qual, use o cabeçalho e o padrão das
 demais linhas da mesma tabela.
+CONFERÊNCIA FINAL DO CÓDIGO: antes de responder, confira cada peça. Se o valor que
+você colocou em "quantidade" aparece como primeiro número do "codigo" (por exemplo
+quantidade 2 e código "2 1 900 905 029"), esse número é a quantidade e NÃO pertence
+ao código: remova-o (o código correto seria "1 900 905 029"). Faça essa conferência
+em todas as linhas, não só nas primeiras.
 
 TENSÃO: normalize para exatamente um destes valores: ${Object.values(EnumTensao).join(", ")}.
 Use NAO_INFORMADO quando o documento não indicar a tensão.

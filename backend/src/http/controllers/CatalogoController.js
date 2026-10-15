@@ -1,6 +1,7 @@
 const { ServiceUnavailableError } = require("../../domain/errors/DomainErrors");
 const { avaliarDescricaoPeca } = require("../../domain/validators/descricaoPecaValidator");
 const { comprimentoPadraoDosCodigos, avaliarCodigoContraPadrao } = require("../../domain/validators/codigoPecaValidator");
+const { avaliarCodigoPorMarca } = require("../../domain/validators/formatoCodigoMarca");
 
 /**
  * Adapta requisições HTTP para os casos de uso do RF06 (Importar Catálogo), RF07
@@ -295,7 +296,11 @@ function apresentarResultado(resultado) {
     tensao: resultado.tensao,
     pecas: resultado.pecas.map((peca) => {
       const avaliacao = avaliarDescricaoPeca(peca.descricao);
-      const avaliacaoCodigo = avaliarCodigoContraPadrao(peca.codigo, padraoDeCodigo);
+      const avaliacaoPorPadrao = avaliarCodigoContraPadrao(peca.codigo, padraoDeCodigo);
+      const avaliacaoPorMarca = avaliarCodigoPorMarca(peca.codigo, resultado.marca);
+      // Suspeito se fugir do padrão do documento OU do formato conhecido da marca;
+      // é só um destaque para o humano conferir, nada é alterado ou rejeitado.
+      const avaliacaoCodigo = avaliacaoPorPadrao.suspeito ? avaliacaoPorPadrao : avaliacaoPorMarca;
       return {
         id: peca.id,
         codigo: peca.codigo,

@@ -96,7 +96,7 @@ class ExtrairDadosCatalogoUseCase {
       marca: extracao.marca,
       modelo: extracao.modelo,
       tensao: extracao.tensao,
-      pecas: corrigirCodigosComQuantidade(extracao.pecas).pecas.map((peca) =>
+      pecas: corrigirCodigosComQuantidade(extracao.pecas, { marca: extracao.marca }).pecas.map((peca) =>
         avaliarDescricaoPeca(peca.descricao).incompleta
           ? { ...peca, confianca: Math.min(peca.confianca ?? TETO_CONFIANCA_DESCRICAO_INCOMPLETA, TETO_CONFIANCA_DESCRICAO_INCOMPLETA) }
           : peca
