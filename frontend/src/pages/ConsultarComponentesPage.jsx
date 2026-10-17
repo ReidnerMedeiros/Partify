@@ -64,9 +64,29 @@ function ConsultarComponentesPage() {
     }
   }
 
+  // A API moderna (navigator.clipboard) só existe em contexto seguro (HTTPS ou
+  // localhost). Em acesso por HTTP simples ela não está disponível, então há um
+  // plano B com um campo temporário e document.execCommand("copy").
+  async function copiarParaAreaDeTransferencia(texto) {
+    if (navigator.clipboard?.writeText && window.isSecureContext) {
+      await navigator.clipboard.writeText(texto);
+      return;
+    }
+    const campo = document.createElement("textarea");
+    campo.value = texto;
+    campo.setAttribute("readonly", "");
+    campo.style.position = "fixed";
+    campo.style.opacity = "0";
+    document.body.appendChild(campo);
+    campo.select();
+    const copiou = document.execCommand("copy");
+    document.body.removeChild(campo);
+    if (!copiou) throw new Error("copia indisponivel");
+  }
+
   async function aoCopiarCodigo(id, codigo) {
     try {
-      await navigator.clipboard.writeText(codigo);
+      await copiarParaAreaDeTransferencia(codigo);
       setCopiadoId(id);
       setTimeout(() => setCopiadoId((atual) => (atual === id ? null : atual)), 1500);
     } catch {
