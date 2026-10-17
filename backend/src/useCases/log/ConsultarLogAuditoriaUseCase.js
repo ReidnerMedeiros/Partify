@@ -1,4 +1,5 @@
 const { ValidationError } = require("../../domain/errors/DomainErrors");
+const { descreverRegistroAfetado } = require("./descreverRegistroAfetado");
 
 const NOME_USUARIO_SISTEMA = "sistema";
 const NOME_USUARIO_DESCONHECIDO = "Usuário removido";
@@ -52,6 +53,7 @@ class ConsultarLogAuditoriaUseCase {
       realizadoEm: registro.realizadoEm,
       tipoAcao: registro.tipoAcao,
       registroAfetado: registro.registroAfetado ?? null,
+      registroDescricao: descreverRegistroAfetado(registro, nomePorUsuarioId),
     }));
   }
 

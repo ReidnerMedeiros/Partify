@@ -120,7 +120,12 @@ class ExtrairDadosCatalogoUseCase {
       tipoAcao: TipoAcao.EXTRACAO_IA,
       registroAfetado: catalogoId,
       // Apenas metadados agregados no log — nunca o texto extraído bruto do documento.
-      detalhes: { status, totalPecasIdentificadas: extracao.pecas.length, confiancaGeral: extracao.confiancaGeral },
+      detalhes: {
+        nomeArquivo: resultadoAtual.catalogo.nomeArquivo,
+        status,
+        totalPecasIdentificadas: extracao.pecas.length,
+        confiancaGeral: extracao.confiancaGeral,
+      },
     });
 
     return resultado;

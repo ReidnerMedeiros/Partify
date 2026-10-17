@@ -192,7 +192,9 @@ function LogSistemaPage() {
                       <td>
                         <span className="badge badge--confianca">{registro.tipoAcao}</span>
                       </td>
-                      <td>{registro.registroAfetado ?? "—"}</td>
+                      <td title={registro.registroAfetado ?? undefined}>
+                        {registro.registroDescricao ?? registro.registroAfetado ?? "—"}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
