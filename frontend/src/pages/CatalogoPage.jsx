@@ -165,7 +165,7 @@ function CatalogoPage() {
     <>
       <TopBar mostrarVoltar />
 
-      <div className="page-content">
+      <div className="page-content page-content--rolavel">
         <div className="content-card content-card--wide">
           <h2>Consultar Catálogos</h2>
           <p className="content-card__subtitle">Catálogos já validados e salvos. Para buscar uma peça específica, use Consultar Componentes.</p>
@@ -217,6 +217,7 @@ function CatalogoPage() {
             <div className="pendentes-lista">
               {catalogos.map((catalogo) => (
                 <div className="pendente-card" key={catalogo.id}>
+                  <div className="pendente-card__principal">
                   <div className="pendente-card__topo">
                     <button
                       type="button"
@@ -227,14 +228,6 @@ function CatalogoPage() {
                       <IconFile />
                       <span>{descreverCatalogo(catalogo)}</span>
                     </button>
-                    <div className="pendente-card__badges">
-                      {catalogo.tensao && (
-                        <span className="badge badge--confianca">{ROTULO_TENSAO[catalogo.tensao] ?? catalogo.tensao}</span>
-                      )}
-                      <span className="badge badge--confianca">
-                        {catalogo.totalPecas} {catalogo.totalPecas === 1 ? "peça" : "peças"}
-                      </span>
-                    </div>
                   </div>
 
                   <p className="pendente-card__info">
@@ -264,6 +257,18 @@ function CatalogoPage() {
                     >
                       <IconDownload /> {baixandoId === catalogo.id ? "Abrindo..." : "Abrir PDF"}
                     </button>
+                  </div>
+                  </div>
+
+                  <div className="pendente-card__lateral">
+                    <div className="pendente-card__badges">
+                      {catalogo.tensao && (
+                        <span className="badge badge--confianca">{ROTULO_TENSAO[catalogo.tensao] ?? catalogo.tensao}</span>
+                      )}
+                      <span className="badge badge--confianca">
+                        {catalogo.totalPecas} {catalogo.totalPecas === 1 ? "peça" : "peças"}
+                      </span>
+                    </div>
                     <button
                       type="button"
                       className="btn btn--outline-danger btn--sm"

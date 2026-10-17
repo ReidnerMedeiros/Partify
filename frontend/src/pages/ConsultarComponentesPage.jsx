@@ -114,9 +114,9 @@ function ConsultarComponentesPage() {
     <>
       <TopBar mostrarVoltar />
 
-      <div className="page-content">
+      <div className="page-content page-content--rolavel">
       <div className="consulta-layout">
-        <div className="content-card content-card--wide">
+        <div className="content-card content-card--wide campos-destacados">
           <h2>Consultar Componentes</h2>
 
           {mensagemErro && <div className="alert alert--error">{mensagemErro}</div>}

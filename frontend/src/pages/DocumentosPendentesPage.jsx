@@ -164,7 +164,7 @@ function DocumentosPendentesPage() {
     <>
       <TopBar mostrarVoltar />
 
-      <div className="page-content">
+      <div className="page-content page-content--rolavel">
         <div className="content-card content-card--wide">
           <h2>Documentos Pendentes</h2>
           <p className="content-card__subtitle">
@@ -182,18 +182,11 @@ function DocumentosPendentesPage() {
             <div className="pendentes-lista">
               {documentos.map((documento) => (
                 <div className="pendente-card" key={documento.id}>
+                  <div className="pendente-card__principal">
                   <div className="pendente-card__topo">
                     <div className="pendente-card__arquivo">
                       <IconFile />
                       <span>{documento.nomeArquivo}</span>
-                    </div>
-                    <div className="pendente-card__badges">
-                      <span className={`badge badge--situacao-${documento.situacao.toLowerCase()}`}>
-                        {ROTULO_SITUACAO[documento.situacao] ?? documento.situacao}
-                      </span>
-                      {typeof documento.confiancaGeral === "number" && (
-                        <span className="badge badge--confianca">{documento.confiancaGeral}% confiança</span>
-                      )}
                     </div>
                   </div>
 
@@ -230,6 +223,18 @@ function DocumentosPendentesPage() {
                     >
                       <IconRefresh /> Reenviar para IA
                     </button>
+                  </div>
+                  </div>
+
+                  <div className="pendente-card__lateral">
+                    <div className="pendente-card__badges">
+                      <span className={`badge badge--situacao-${documento.situacao.toLowerCase()}`}>
+                        {ROTULO_SITUACAO[documento.situacao] ?? documento.situacao}
+                      </span>
+                      {typeof documento.confiancaGeral === "number" && (
+                        <span className="badge badge--confianca">{documento.confiancaGeral}% confiança</span>
+                      )}
+                    </div>
                     <button
                       type="button"
                       className="btn btn--outline-danger btn--sm"

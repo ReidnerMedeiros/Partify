@@ -99,8 +99,8 @@ function LogSistemaPage() {
     <>
       <TopBar mostrarVoltar />
 
-      <div className="page-content page-content--coluna">
-        <div className="content-card content-card--wide">
+      <div className="page-content page-content--coluna page-content--rolavel">
+        <div className="content-card content-card--wide campos-destacados">
           <h2>Histórico do Sistema</h2>
 
           {mensagemErro && <div className="alert alert--error">{mensagemErro}</div>}
@@ -187,7 +187,7 @@ function LogSistemaPage() {
                 <tbody>
                   {registros.map((registro) => (
                     <tr key={registro.id}>
-                      <td>{formatarDataHora(registro.realizadoEm)}</td>
+                      <td className="col-data-hora">{formatarDataHora(registro.realizadoEm)}</td>
                       <td>{registro.usuarioNome}</td>
                       <td>
                         <span className="badge badge--confianca">{registro.tipoAcao}</span>

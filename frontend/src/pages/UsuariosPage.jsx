@@ -117,7 +117,7 @@ function UsuariosPage() {
     <>
       <TopBar mostrarVoltar />
 
-      <div className="page-content">
+      <div className="page-content page-content--rolavel">
         <div className="content-card content-card--wide">
           <h2>Gestão de Usuários e Sistema</h2>
 

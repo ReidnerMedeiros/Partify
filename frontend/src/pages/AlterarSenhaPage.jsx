@@ -51,7 +51,7 @@ function AlterarSenhaPage() {
     <>
       <TopBar />
       <div className="page-content">
-        <div className="content-card">
+        <div className="content-card content-card--moldura">
           <h2>Alterar Senha</h2>
           <p className="content-card__subtitle">Informe sua senha atual e defina a nova senha.</p>
 

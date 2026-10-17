@@ -113,7 +113,7 @@ function ImportarCatalogoPage() {
       <TopBar mostrarVoltar />
 
       <div className="page-content">
-        <div className="content-card">
+        <div className="content-card content-card--moldura">
           <h2>Importar Catálogo</h2>
 
           {mensagemErro && (

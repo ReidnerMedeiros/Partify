@@ -122,7 +122,7 @@ function DadosEmpresaPage() {
     <>
       <TopBar />
       <div className="page-content">
-        <div className="content-card">
+        <div className="content-card content-card--moldura">
           {!modoEdicao ? (
             <>
               <div className="content-card__header">

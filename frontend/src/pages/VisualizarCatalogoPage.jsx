@@ -97,7 +97,7 @@ function VisualizarCatalogoPage() {
     <>
       <TopBar mostrarVoltar />
 
-      <div className="page-content">
+      <div className="page-content page-content--rolavel">
         <div className="content-card content-card--wide">
           <h2>{catalogo ? [catalogo.marca, catalogo.modelo].filter(Boolean).join(" ") || "Catálogo" : "Catálogo"}</h2>
 
