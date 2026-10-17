@@ -479,6 +479,7 @@ a {
 /* Cartões empilhados (ex.: Histórico do Sistema: filtros em cima, resultados embaixo) */
 .page-content--coluna {
   flex-direction: column;
+  justify-content: flex-start;
   align-items: center;
   gap: 20px;
 }
