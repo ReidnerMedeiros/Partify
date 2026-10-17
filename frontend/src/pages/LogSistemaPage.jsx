@@ -99,7 +99,7 @@ function LogSistemaPage() {
     <>
       <TopBar mostrarVoltar />
 
-      <div className="page-content">
+      <div className="page-content page-content--coluna">
         <div className="content-card content-card--wide">
           <h2>Histórico do Sistema</h2>
 

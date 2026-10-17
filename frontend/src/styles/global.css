@@ -476,6 +476,13 @@ a {
   padding: 48px 24px;
 }
 
+/* Cartões empilhados (ex.: Histórico do Sistema: filtros em cima, resultados embaixo) */
+.page-content--coluna {
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
 .content-card {
   width: 100%;
   max-width: 460px;
