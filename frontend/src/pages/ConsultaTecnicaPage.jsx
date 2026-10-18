@@ -24,6 +24,35 @@ function IconChat() {
   );
 }
 
+function IconSparkles() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M11 3l1.9 5.1L18 10l-5.1 1.9L11 17l-1.9-5.1L4 10l5.1-1.9z" />
+      <path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8z" />
+    </svg>
+  );
+}
+
+function escaparRegex(texto) {
+  return texto.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/* Destaca, dentro do texto da resposta, os códigos das peças citadas como fonte. */
+function destacarCodigos(texto, fontes) {
+  const codigos = [...new Set((fontes ?? []).map((fonte) => fonte.codigo).filter(Boolean))].sort((a, b) => b.length - a.length);
+  if (!texto || codigos.length === 0) return texto;
+  const partes = texto.split(new RegExp(`(${codigos.map(escaparRegex).join("|")})`, "g"));
+  return partes.map((parte, indice) =>
+    codigos.includes(parte) ? (
+      <mark key={indice} className="chat-codigo">
+        {parte}
+      </mark>
+    ) : (
+      parte
+    )
+  );
+}
+
 function IconSend() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -149,11 +178,20 @@ function ConsultaTecnicaPage() {
 
             {mensagens.map((mensagem) => (
               <div key={mensagem.id} className={`chat-bolha chat-bolha--${mensagem.autor}`}>
+                {mensagem.autor === "ia" && (
+                  <div className="chat-bolha__autor">
+                    <span className="chat-bolha__icone">
+                      <IconSparkles />
+                    </span>
+                    Assistente Partify (IA)
+                  </div>
+                )}
+
                 {mensagem.autor === "usuario" && <p>{mensagem.texto}</p>}
 
                 {mensagem.autor === "ia" && mensagem.situacao === "RESPONDIDO" && (
                   <>
-                    <p>{mensagem.texto}</p>
+                    <p>{destacarCodigos(mensagem.texto, mensagem.fontes)}</p>
                     {mensagem.fontes?.length > 0 && (
                       <div className="fonte-citada">
                         <div className="fonte-citada__texto">
@@ -195,6 +233,9 @@ function ConsultaTecnicaPage() {
 
             {enviando && (
               <div className="chat-bolha chat-bolha--ia chat-digitando" role="status" aria-label="A IA está respondendo">
+                <span className="chat-bolha__icone">
+                  <IconSparkles />
+                </span>
                 <span />
                 <span />
                 <span />

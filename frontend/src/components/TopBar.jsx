@@ -81,6 +81,11 @@ function TopBar({ mostrarVoltar = true, voltarPara }) {
         <span className="topbar__logo">
           <PartifyLogo />
         </span>
+        {usuario?.nome && (
+          <span className="topbar__boasvindas">
+            Bem-vindo(a), <strong>{usuario.nome}</strong>
+          </span>
+        )}
       </div>
       <div className="topbar__actions">
         <div className="topbar__menu-wrapper" ref={wrapperRef}>

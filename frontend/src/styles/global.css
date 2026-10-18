@@ -14,8 +14,8 @@
   --shadow-card: 0 10px 30px rgba(17, 24, 39, 0.12);
   /* Intensidade do desenho de peças no fundo (menu e telas de autenticação).
      Ajuste só aqui se ficar forte ou fraco demais. */
-  --fundo-pecas-opacidade: 0.14;
-  --fundo-pecas-opacidade-auth: 0.35;
+  --fundo-pecas-opacidade: 0.3;
+  --fundo-pecas-opacidade-auth: 0.5;
 }
 
 * {
@@ -372,12 +372,14 @@ a {
    da página (multiply faz o branco da imagem desaparecer). Atrás do conteúdo e
    sem receber cliques. Se os arquivos não existirem em public/fundo/, só o
    fundo liso aparece. */
+.page-content,
 .page-content--fundo-pecas {
   position: relative;
   isolation: isolate;
   background: var(--partify-bg-page);
 }
 
+.page-content::before,
 .page-content--fundo-pecas::before {
   content: "";
   position: absolute;
@@ -392,6 +394,7 @@ a {
 }
 
 @media (min-width: 900px) {
+  .page-content::before,
   .page-content--fundo-pecas::before {
     background-image: url("/fundo/fundo-pecas-2000.webp");
   }
@@ -499,14 +502,14 @@ a {
 .content-card--moldura {
   max-width: 560px;
   padding: 36px 36px 32px;
-  border: 2px solid #c7d2ee;
+  border: 2px solid var(--partify-borda-forte);
 }
 
 /* Cabeçalho separado do conteúdo e linhas divisórias entre os dados (Dados da Empresa) */
 .content-card--moldura .content-card__header {
   padding-bottom: 14px;
   margin-bottom: 8px;
-  border-bottom: 2px solid #c7d2ee;
+  border-bottom: 2px solid var(--partify-borda-forte);
 }
 
 .content-card--moldura .content-card__header .content-card__subtitle {
@@ -517,7 +520,7 @@ a {
 .content-card--moldura > .content-card__subtitle {
   margin-bottom: 18px;
   padding-bottom: 14px;
-  border-bottom: 2px solid #c7d2ee;
+  border-bottom: 2px solid var(--partify-borda-forte);
 }
 
 .content-card--moldura .field input,
@@ -533,11 +536,11 @@ a {
 
 .content-card--moldura .data-row {
   padding: 14px 0;
-  border-bottom: 2px solid #c7d2ee;
+  border-bottom: 2px solid var(--partify-borda-forte);
 }
 
 .content-card--moldura .data-row:last-of-type {
-  border-bottom: 2px solid #c7d2ee;
+  border-bottom: 2px solid var(--partify-borda-forte);
 }
 
 .content-card__header {
@@ -1528,8 +1531,8 @@ a {
 
 /* --- Visual com limites mais claros (listas, filtros, botões, tabelas) --- */
 :root {
-  --partify-borda-forte: #c7d2ee;
-  --partify-borda-campo: #9fb0d4;
+  --partify-borda-forte: #93a8d8;
+  --partify-borda-campo: #6580b8;
 }
 
 /* Painel de filtros com moldura (Consultar Catálogos) */
@@ -1673,6 +1676,331 @@ a {
 .data-table th:last-child,
 .data-table td:last-child {
   border-right: none;
+}
+
+/* --- Barra lateral e moldura das telas autenticadas --- */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.app-shell__conteudo {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar {
+  display: none;
+}
+
+/* Mensagem de boas-vindas na barra superior (telas médias e largas) */
+.topbar__boasvindas {
+  display: none;
+  margin-left: 4px;
+  padding-left: 14px;
+  border-left: 1px solid rgba(255, 255, 255, 0.35);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+@media (min-width: 700px) {
+  .topbar__boasvindas {
+    display: inline;
+  }
+}
+
+/* A barra lateral só existe em telas largas; abaixo disso vale o Menu Principal em tela cheia. */
+@media (min-width: 1001px) {
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 248px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--partify-blue);
+    color: #fff;
+    padding: 20px 0 20px 14px;
+  }
+
+  .sidebar__marca {
+    display: flex;
+    align-items: center;
+    padding: 6px 12px 22px;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .sidebar__nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .sidebar__titulo {
+    margin: 0 0 6px 14px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .sidebar__item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 14px;
+    background: none;
+    border: none;
+    border-radius: 14px 0 0 14px;
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .sidebar__item:hover {
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  /* Item ativo: "aba" na cor do fundo da página, encostada na área de conteúdo */
+  .sidebar__item--ativo,
+  .sidebar__item--ativo:hover {
+    background: var(--partify-bg-page);
+    color: var(--partify-blue);
+  }
+
+  .sidebar__icone {
+    display: flex;
+  }
+
+  .sidebar__icone svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .sidebar__rotulo {
+    flex: 1;
+  }
+
+  .sidebar__selo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--partify-blue);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .sidebar__item--ativo .sidebar__selo {
+    background: var(--partify-blue);
+    color: #fff;
+  }
+
+  .sidebar__sair {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 16px 14px 0 0;
+    padding: 11px 14px;
+    background: transparent;
+    border: 1.5px solid rgba(255, 255, 255, 0.55);
+    border-radius: 10px;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .sidebar__sair:hover {
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  /* A marca fica na barra lateral, e o "Sair" também: some o que seria repetido */
+  .app-shell .topbar__logo {
+    display: none;
+  }
+
+  .app-shell .topbar__boasvindas {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+  }
+
+  .menu-btn--sair-pagina {
+    display: none;
+  }
+}
+
+/* --- Visão geral (Menu Principal em telas largas, no lugar do menu duplicado) --- */
+.painel-inicio {
+  display: none;
+}
+
+@media (min-width: 1001px) {
+  .menu-card {
+    display: none;
+  }
+
+  .painel-inicio {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 980px;
+    height: fit-content;
+  }
+
+  .painel-inicio__titulo {
+    margin: 0;
+    font-size: 1.3rem;
+    color: var(--partify-blue-dark);
+  }
+
+  .painel-inicio__cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .painel-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 18px 20px;
+    background: #fff;
+    border: 2px solid var(--partify-borda-forte);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+  }
+
+  .painel-card__rotulo {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--partify-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .painel-card__valor {
+    font-size: 2rem;
+    line-height: 1.1;
+    color: var(--partify-blue);
+  }
+
+  .painel-card__detalhe {
+    font-size: 0.8rem;
+    color: var(--partify-text-muted);
+    min-height: 1.1em;
+  }
+
+  .painel-inicio__lista {
+    padding: 20px;
+    background: #fff;
+    border: 2px solid var(--partify-borda-forte);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+  }
+
+  .painel-inicio__lista h3 {
+    margin: 0 0 12px;
+    font-size: 1rem;
+  }
+}
+
+/* Consulta Técnica (IA): cartão de resposta colorido, ícone da IA e códigos de peça em destaque */
+.chat-bolha--ia {
+  background: #e3ebfd;
+  border: 1.5px solid var(--partify-borda-forte);
+  color: var(--partify-text);
+}
+
+.chat-bolha__autor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--partify-blue-dark);
+}
+
+.chat-bolha__icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--partify-blue);
+  color: #fff;
+}
+
+.chat-bolha__icone svg {
+  width: 14px;
+  height: 14px;
+}
+
+.chat-digitando {
+  align-items: center;
+}
+
+.chat-digitando .chat-bolha__icone {
+  width: 24px;
+  height: 24px;
+  margin-right: 4px;
+  background: var(--partify-blue);
+  animation: none;
+  opacity: 1;
+}
+
+.chat-bolha--ia .fonte-citada {
+  background: #fff;
+  border: 1.5px solid var(--partify-borda-forte);
+}
+
+/* Código da peça na fonte citada: etiqueta azul cheia */
+.fonte-citada__codigos .badge {
+  padding: 5px 12px;
+  background: var(--partify-blue);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(29, 78, 216, 0.35);
+}
+
+/* Código da peça dentro do texto da resposta */
+.chat-codigo {
+  padding: 1px 8px;
+  background: #fff;
+  color: var(--partify-blue-dark);
+  border: 1.5px solid var(--partify-blue);
+  border-radius: 6px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 /* Validar/Editar catálogo: painéis com moldura, divisórias entre campos e entre colunas das peças */
