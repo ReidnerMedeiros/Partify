@@ -517,7 +517,7 @@ a {
 }
 
 /* Título e subtítulo soltos no cartão (ex.: Alterar Senha): linha divisória embaixo */
-.content-card--moldura > .content-card__subtitle {
+.content-card--moldura > h2 + .content-card__subtitle {
   margin-bottom: 18px;
   padding-bottom: 14px;
   border-bottom: 2px solid var(--partify-borda-forte);
@@ -1625,7 +1625,8 @@ a {
   gap: 12px;
   padding-left: 18px;
   border-left: 2px solid var(--partify-borda-forte);
-  min-width: 140px;
+  width: 210px;
+  flex-shrink: 0;
 }
 
 .pendente-card__lateral .pendente-card__badges {
@@ -1634,6 +1635,11 @@ a {
 
 .pendente-card__lateral .btn--outline-danger {
   margin-left: 0;
+}
+
+/* Espaço entre os botões do cabeçalho e o campo de busca (Visualizar Catálogo) */
+.pendente-card__acoes + .field {
+  margin-top: 16px;
 }
 
 /* Linha separando as informações dos botões do cartão */
@@ -1650,10 +1656,24 @@ a {
   .pendente-card__lateral {
     flex-direction: row;
     align-items: center;
+    flex-wrap: wrap;
+    width: auto;
     padding: 12px 0 0;
     margin-top: 12px;
     border-left: none;
     border-top: 2px solid var(--partify-borda-forte);
+  }
+
+  .pendente-card__lateral .pendente-card__badges {
+    justify-content: flex-start;
+  }
+
+  .pendente-card__lateral .btn--outline-danger {
+    margin-left: auto;
+  }
+
+  .content-card--moldura {
+    padding: 22px 18px 20px;
   }
 }
 
@@ -2380,8 +2400,15 @@ a {
     align-items: center;
     gap: 12px;
     padding: 5px 0;
+    border-right: none;
     border-bottom: none;
+    box-sizing: border-box;
     text-align: right;
+    overflow-wrap: anywhere;
+  }
+
+  .data-table--cartoes tr {
+    box-sizing: border-box;
   }
 
   .data-table--cartoes td::before {
