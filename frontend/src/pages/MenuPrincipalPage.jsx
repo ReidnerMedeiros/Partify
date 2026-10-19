@@ -4,21 +4,7 @@ import TopBar from "../components/TopBar.jsx";
 import { montarSecoesMenu } from "../components/menuItens.jsx";
 import { useSair } from "../components/useSair.jsx";
 import { obterUsuario } from "../services/authService.js";
-import { listarDocumentosPendentes, listarCatalogosValidados } from "../services/catalogoService.js";
-
-const ROTULO_TENSAO = {
-  V127: "127V",
-  V220: "220V",
-  BIVOLT: "Bivolt",
-};
-
-function formatarData(iso) {
-  return iso ? new Date(iso).toLocaleDateString("pt-BR") : "—";
-}
-
-function descreverCatalogo(catalogo) {
-  return [catalogo.marca, catalogo.modelo].filter(Boolean).join(" ") || "Sem marca e modelo";
-}
+import { listarDocumentosPendentes } from "../services/catalogoService.js";
 
 function IconLogOut() {
   return (
@@ -30,22 +16,33 @@ function IconLogOut() {
   );
 }
 
+function IconEngrenagem() {
+  return (
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M19.14 12.94a7.14 7.14 0 0 0 .06-.94 7.14 7.14 0 0 0-.06-.94l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.6-.22l-2.39.96a7.03 7.03 0 0 0-1.62-.94l-.36-2.54a.5.5 0 0 0-.5-.42h-3.84a.5.5 0 0 0-.5.42l-.36 2.54c-.59.24-1.14.56-1.62.94l-2.39-.96a.5.5 0 0 0-.6.22L2.71 8.84a.5.5 0 0 0 .12.64l2.03 1.58c-.04.31-.06.62-.06.94s.02.63.06.94l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.14.24.42.32.6.22l2.39-.96c.48.38 1.03.7 1.62.94l.36 2.54c.05.24.26.42.5.42h3.84c.24 0 .45-.18.5-.42l.36-2.54c.59-.24 1.14-.56 1.62-.94l2.39.96c.24.1.5 0 .6-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 /**
- * Tela inicial após o login (RF02). Ponto central de navegação do sistema.
- * Em telas largas a barra lateral já oferece a navegação e o "Sair"; em telas
- * estreitas (sem barra lateral) este menu em tela cheia é a navegação, com o
- * botão "Sair" (RF02-A1) e a mesma confirmação em duas etapas (RNF03).
+ * Tela inicial após o login (RF02). Em telas largas a barra lateral já oferece
+ * a navegação e o "Sair", então aqui fica só uma mensagem de boas-vindas; em
+ * telas estreitas (sem barra lateral) o menu em tela cheia é a navegação, com
+ * o botão "Sair" (RF02-A1) e a mesma confirmação em duas etapas (RNF03).
  */
 function MenuPrincipalPage() {
   const navigate = useNavigate();
   const { pedirSaida, modalSaida } = useSair();
   const [pendentes, setPendentes] = useState(null);
-  const [validados, setValidados] = useState(null);
-  const secoesMenu = montarSecoesMenu(obterUsuario());
+  const usuario = obterUsuario();
+  const secoesMenu = montarSecoesMenu(usuario);
   const totalPendentes = pendentes?.length ?? 0;
 
-  // Resumo da visão geral e selo de pendentes. São só avisos: se a consulta
-  // falhar, o menu aparece normalmente e os números ficam como "—".
+  // Selo de pendentes no menu. É só um aviso: se a consulta falhar, o menu
+  // aparece normalmente, sem o número.
   useEffect(() => {
     let cancelado = false;
     listarDocumentosPendentes()
@@ -53,85 +50,26 @@ function MenuPrincipalPage() {
         if (!cancelado) setPendentes(documentos);
       })
       .catch(() => {});
-    listarCatalogosValidados()
-      .then((lista) => {
-        if (!cancelado) setValidados(lista);
-      })
-      .catch(() => {});
     return () => {
       cancelado = true;
     };
   }, []);
 
-  const totalPecas = validados?.reduce((soma, catalogo) => soma + (catalogo.totalPecas ?? 0), 0);
-  const totalMarcas = validados ? new Set(validados.map((catalogo) => catalogo.marca).filter(Boolean)).size : undefined;
-  const aguardandoValidacao = pendentes?.filter((documento) => documento.situacao === "PENDENTE").length;
-  const extracaoIncompleta = pendentes?.filter((documento) => documento.situacao === "IRRESOLUVEL").length;
-  const ultimosValidados = validados
-    ? [...validados].sort((a, b) => new Date(b.validadoEm ?? 0) - new Date(a.validadoEm ?? 0)).slice(0, 5)
-    : [];
-
   return (
     <>
       <TopBar mostrarVoltar={false} />
       <div className="page-content page-content--fundo-pecas">
-        {/* Telas largas: visão geral (a navegação fica na barra lateral). */}
-        <section className="painel-inicio" aria-label="Visão geral">
-          <h2 className="painel-inicio__titulo">Visão geral</h2>
-
-          <div className="painel-inicio__cards">
-            <div className="painel-card">
-              <span className="painel-card__rotulo">Catálogos validados</span>
-              <strong className="painel-card__valor">{validados ? validados.length : "—"}</strong>
-              <span className="painel-card__detalhe">
-                {totalMarcas === undefined ? " " : `${totalMarcas} ${totalMarcas === 1 ? "marca" : "marcas"}`}
-              </span>
-            </div>
-            <div className="painel-card">
-              <span className="painel-card__rotulo">Peças cadastradas</span>
-              <strong className="painel-card__valor">{totalPecas ?? "—"}</strong>
-              <span className="painel-card__detalhe">disponíveis nas consultas</span>
-            </div>
-            <div className="painel-card">
-              <span className="painel-card__rotulo">Documentos pendentes</span>
-              <strong className="painel-card__valor">{pendentes ? pendentes.length : "—"}</strong>
-              <span className="painel-card__detalhe">
-                {pendentes ? `${aguardandoValidacao} aguardando validação ` : " "}
-              </span>
-            </div>
-          </div>
-
-          <div className="painel-inicio__lista">
-            <h3>Últimos catálogos validados</h3>
-            {validados && ultimosValidados.length === 0 ? (
-              <p className="table-card__estado">Nenhum catálogo validado ainda.</p>
-            ) : (
-              <div className="table-card">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>Catálogo</th>
-                      <th>Tensão</th>
-                      <th>Peças</th>
-                      <th>Validado por</th>
-                      <th>Data</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ultimosValidados.map((catalogo) => (
-                      <tr key={catalogo.id}>
-                        <td>{descreverCatalogo(catalogo)}</td>
-                        <td>{ROTULO_TENSAO[catalogo.tensao] ?? "—"}</td>
-                        <td>{catalogo.totalPecas}</td>
-                        <td>{catalogo.validadoPor ?? "—"}</td>
-                        <td className="col-data-hora">{formatarData(catalogo.validadoEm)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
+        {/* Telas largas: boas-vindas (a navegação fica na barra lateral). */}
+        <section className="painel-inicio" aria-label="Boas-vindas">
+          <span className="painel-inicio__icone">
+            <IconEngrenagem />
+          </span>
+          <h2 className="painel-inicio__titulo">Bem-vindo(a), {usuario?.nome}!</h2>
+          <p className="painel-inicio__texto">
+            O Partify ajuda você a importar catálogos técnicos de ferramentas elétricas, consultar componentes e tirar dúvidas com o
+            assistente de IA, usando apenas os catálogos validados da sua empresa.
+          </p>
+          <p className="painel-inicio__dica">Escolha uma opção no menu à esquerda para começar.</p>
         </section>
 
         {/* Telas estreitas (sem barra lateral): o menu em tela cheia é a navegação. */}

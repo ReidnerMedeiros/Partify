@@ -1871,7 +1871,7 @@ a {
   }
 }
 
-/* --- Visão geral (Menu Principal em telas largas, no lugar do menu duplicado) --- */
+/* --- Boas-vindas (Menu Principal em telas largas, no lugar do menu duplicado) --- */
 .painel-inicio {
   display: none;
 }
@@ -1884,66 +1884,51 @@ a {
   .painel-inicio {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    align-items: center;
+    gap: 10px;
     width: 100%;
-    max-width: 980px;
+    max-width: 640px;
     height: fit-content;
+    padding: 48px 40px;
+    background: #fff;
+    border: 2px solid var(--partify-borda-forte);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-card);
+    text-align: center;
+  }
+
+  .painel-inicio__icone {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #e3ebfd;
+    color: var(--partify-blue);
+    font-size: 1.8rem;
   }
 
   .painel-inicio__titulo {
-    margin: 0;
-    font-size: 1.3rem;
+    margin: 8px 0 0;
+    font-size: 1.6rem;
     color: var(--partify-blue-dark);
   }
 
-  .painel-inicio__cards {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-  }
-
-  .painel-card {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    padding: 18px 20px;
-    background: #fff;
-    border: 2px solid var(--partify-borda-forte);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-card);
-  }
-
-  .painel-card__rotulo {
-    font-size: 0.8125rem;
-    font-weight: 600;
+  .painel-inicio__texto {
+    margin: 0;
+    max-width: 480px;
     color: var(--partify-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
+    line-height: 1.5;
   }
 
-  .painel-card__valor {
-    font-size: 2rem;
-    line-height: 1.1;
-    color: var(--partify-blue);
-  }
-
-  .painel-card__detalhe {
-    font-size: 0.8rem;
+  .painel-inicio__dica {
+    margin: 10px 0 0;
+    padding-top: 16px;
+    border-top: 2px solid var(--partify-borda-forte);
+    width: 100%;
+    font-size: 0.875rem;
     color: var(--partify-text-muted);
-    min-height: 1.1em;
-  }
-
-  .painel-inicio__lista {
-    padding: 20px;
-    background: #fff;
-    border: 2px solid var(--partify-borda-forte);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-card);
-  }
-
-  .painel-inicio__lista h3 {
-    margin: 0 0 12px;
-    font-size: 1rem;
   }
 }
 

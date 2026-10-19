@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- arquivo de dados (ícones + funções), não um componente de tela */
 /* Itens de navegação do sistema, compartilhados pelo Menu Principal (cartões) e
    pela barra lateral. Ícones em SVG inline (sem dependência externa), no mesmo
    estilo de traço fino usado no protótipo. */
