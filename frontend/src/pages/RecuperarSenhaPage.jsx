@@ -46,9 +46,11 @@ function RecuperarSenhaPage() {
         </div>
 
         <h1>Recuperar Senha</h1>
-        <p className="auth-card__subtitle">
-          Informe seu login e e-mail cadastrados para receber o link de redefinição de senha.
-        </p>
+        {!enviado && (
+          <p className="auth-card__subtitle">
+            Informe seu login e e-mail cadastrados para receber o link de redefinição de senha.
+          </p>
+        )}
 
         {mensagem && <div className="alert alert--success">{mensagem}</div>}
         {mensagemErro && <div className="alert alert--error">{mensagemErro}</div>}
