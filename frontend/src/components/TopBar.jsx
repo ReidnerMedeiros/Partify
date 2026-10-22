@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PartifyLogo from "./PartifyLogo";
 import { obterUsuario } from "../services/authService.js";
+import { useSidebar } from "./sidebarContext.js";
 
 const ROTULO_PERFIL = {
   ADMINISTRADOR: "Administrador",
@@ -13,6 +14,14 @@ function IconeVoltar() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M19 12H5M12 19l-7-7 7-7" />
+    </svg>
+  );
+}
+
+function IconeMenu() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 6h18M3 12h18M3 18h18" />
     </svg>
   );
 }
@@ -35,6 +44,7 @@ function IconeUsuario() {
  */
 function TopBar({ mostrarVoltar = true, voltarPara }) {
   const navigate = useNavigate();
+  const sidebar = useSidebar();
   const [menuAberto, setMenuAberto] = useState(false);
   const wrapperRef = useRef(null);
   const usuario = obterUsuario();
@@ -73,6 +83,18 @@ function TopBar({ mostrarVoltar = true, voltarPara }) {
   return (
     <header className="topbar">
       <div className="topbar__left">
+        {sidebar?.podeAlternar && (
+          <button
+            type="button"
+            className="topbar__menu-toggle"
+            onClick={sidebar.alternar}
+            aria-label={sidebar.aberta ? "Ocultar menu lateral" : "Exibir menu lateral"}
+            aria-expanded={sidebar.aberta}
+            title={sidebar.aberta ? "Ocultar menu lateral" : "Exibir menu lateral"}
+          >
+            <IconeMenu />
+          </button>
+        )}
         {mostrarVoltar && (
           <button type="button" className="topbar__back" onClick={voltar} aria-label="Voltar">
             <IconeVoltar />

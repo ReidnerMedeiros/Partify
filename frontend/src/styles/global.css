@@ -1713,6 +1713,11 @@ a {
   display: none;
 }
 
+/* O botão de ocultar/exibir a barra lateral só existe onde a barra existe (telas largas) */
+.topbar__menu-toggle {
+  display: none;
+}
+
 /* Mensagem de boas-vindas na barra superior (telas médias e largas) */
 .topbar__boasvindas {
   display: none;
@@ -1855,15 +1860,76 @@ a {
     background: rgba(255, 255, 255, 0.14);
   }
 
-  /* A marca fica na barra lateral, e o "Sair" também: some o que seria repetido */
-  .app-shell .topbar__logo {
+  /* No Menu Principal a barra lateral fica fixa e já traz a marca: some o que seria repetido.
+     Nas demais telas a barra é uma gaveta recolhida, então a marca fica na barra superior. */
+  .app-shell:not(.app-shell--gaveta) .topbar__logo {
     display: none;
   }
 
-  .app-shell .topbar__boasvindas {
+  .app-shell:not(.app-shell--gaveta) .topbar__boasvindas {
     margin-left: 0;
     padding-left: 0;
     border-left: none;
+  }
+
+  /* Gaveta: desliza por cima do conteúdo, sem empurrá-lo nem fazer a tela "pular" */
+  .app-shell--gaveta .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 60;
+    transform: translateX(-100%);
+    visibility: hidden;
+    box-shadow: none;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, visibility 0s linear 0.25s;
+  }
+
+  .app-shell--gaveta-aberta .sidebar {
+    transform: translateX(0);
+    visibility: visible;
+    box-shadow: 6px 0 28px rgba(15, 30, 80, 0.28);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, visibility 0s;
+  }
+
+  .app-shell__fundo {
+    position: fixed;
+    inset: 0;
+    z-index: 55;
+    background: rgba(15, 30, 80, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  .app-shell--gaveta-aberta .app-shell__fundo {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .app-shell--gaveta .sidebar,
+    .app-shell--gaveta-aberta .sidebar,
+    .app-shell__fundo {
+      transition: none;
+    }
+  }
+
+  /* Botão que oculta/exibe a barra lateral (nas telas que não são o Menu Principal) */
+  .topbar__menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+  }
+
+  .topbar__menu-toggle:hover {
+    background: rgba(255, 255, 255, 0.25);
   }
 
   .menu-btn--sair-pagina {

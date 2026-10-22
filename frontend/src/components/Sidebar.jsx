@@ -21,7 +21,7 @@ function IconLogOut() {
  * celular continua valendo o Menu Principal em tela cheia). Usa os mesmos itens
  * e as mesmas regras de perfil do Menu Principal, sem nenhuma opção nova.
  */
-function Sidebar() {
+function Sidebar({ aoNavegar }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const { pedirSaida, modalSaida } = useSair();
@@ -44,7 +44,15 @@ function Sidebar() {
 
   return (
     <aside className="sidebar" aria-label="Navegação principal">
-      <button type="button" className="sidebar__marca" onClick={() => navigate("/menu")} aria-label="Ir para o Menu Principal">
+      <button
+        type="button"
+        className="sidebar__marca"
+        onClick={() => {
+          aoNavegar?.();
+          navigate("/menu");
+        }}
+        aria-label="Ir para o Menu Principal"
+      >
         <PartifyLogo />
       </button>
 
@@ -62,7 +70,10 @@ function Sidebar() {
                   type="button"
                   className={`sidebar__item ${ativo ? "sidebar__item--ativo" : ""}`}
                   aria-current={ativo ? "page" : undefined}
-                  onClick={() => navigate(item.rota)}
+                  onClick={() => {
+                    aoNavegar?.();
+                    navigate(item.rota);
+                  }}
                 >
                   <span className="sidebar__icone">
                     <item.Icone />
