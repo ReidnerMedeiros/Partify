@@ -7,9 +7,15 @@ import { extrairErroApi } from "../services/api.js";
 import { logout } from "../services/authService.js";
 import { mascararTelefone } from "../utils/masks.js";
 
+/* Oculta o documento trocando cada dígito por "•" e mantendo a pontuação (••.•••.•••/••••-••). */
+function ocultarDocumento(documento) {
+  return String(documento ?? "").replace(/\d/g, "•");
+}
+
 /**
  * RF01 — fluxos alternativos A1 (consulta/atualização) e A2 (desativação).
- * Réplica das Figuras 6 (visualização) e 7 (edição).
+ * Réplica das Figuras 6 (visualização) e 7 (edição). O CNPJ/CPF fica oculto por
+ * padrão, com um botão "Mostrar"/"Ocultar" (dado de identificação da empresa).
  */
 function DadosEmpresaPage() {
   const navigate = useNavigate();
@@ -24,6 +30,7 @@ function DadosEmpresaPage() {
   const [mensagemErro, setMensagemErro] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [mensagemSucesso, setMensagemSucesso] = useState("");
+  const [documentoVisivel, setDocumentoVisivel] = useState(false);
 
   const [confirmandoDesativacao, setConfirmandoDesativacao] = useState(false);
   const [desativando, setDesativando] = useState(false);
@@ -143,7 +150,18 @@ function DadosEmpresaPage() {
               </div>
               <div className="data-row">
                 <div className="data-row__label">CNPJ ou CPF</div>
-                <div className="data-row__value">{empresa.cnpjCpf}</div>
+                <div className="data-row__value data-row__value--com-acao">
+                  <span>{documentoVisivel ? empresa.cnpjCpf : ocultarDocumento(empresa.cnpjCpf)}</span>
+                  <button
+                    type="button"
+                    className="data-row__alternar"
+                    onClick={() => setDocumentoVisivel((atual) => !atual)}
+                    aria-label={documentoVisivel ? "Ocultar CNPJ ou CPF" : "Mostrar CNPJ ou CPF"}
+                    aria-pressed={documentoVisivel}
+                  >
+                    {documentoVisivel ? "Ocultar" : "Mostrar"}
+                  </button>
+                </div>
               </div>
               <div className="data-row">
                 <div className="data-row__label">Telefone</div>
@@ -209,7 +227,26 @@ function DadosEmpresaPage() {
                   onChange={(e) => setValores((atual) => ({ ...atual, nome: e.target.value }))}
                 />
                 {/* CNPJ/CPF não é editável — é a chave de identificação da instância (RF01 não prevê edição deste campo) */}
-                <Field id="cnpjCpf" label="CNPJ ou CPF" value={empresa.cnpjCpf} disabled />
+                <div className="field">
+                  <label htmlFor="cnpjCpf">CNPJ ou CPF</label>
+                  <div className="field__input-wrap">
+                    <input
+                      id="cnpjCpf"
+                      className="field__input--com-acao"
+                      value={documentoVisivel ? empresa.cnpjCpf : ocultarDocumento(empresa.cnpjCpf)}
+                      disabled
+                    />
+                    <button
+                      type="button"
+                      className="field__alternar"
+                      onClick={() => setDocumentoVisivel((atual) => !atual)}
+                      aria-label={documentoVisivel ? "Ocultar CNPJ ou CPF" : "Mostrar CNPJ ou CPF"}
+                      aria-pressed={documentoVisivel}
+                    >
+                      {documentoVisivel ? "Ocultar" : "Mostrar"}
+                    </button>
+                  </div>
+                </div>
                 <Field
                   id="telefone"
                   label="Telefone"

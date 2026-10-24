@@ -1105,6 +1105,31 @@ a {
   color: var(--partify-text);
 }
 
+/* Valor com botão "Mostrar/Ocultar" ao lado (CNPJ/CPF em Dados da Empresa) */
+.data-row__value--com-acao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.data-row__alternar {
+  flex-shrink: 0;
+  min-height: 32px;
+  padding: 0 12px;
+  background: var(--partify-blue-light);
+  border: 1.5px solid var(--partify-blue);
+  border-radius: 6px;
+  color: var(--partify-blue);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.data-row__alternar:hover {
+  background: #fff;
+}
+
 /* --- Botões --- */
 .btn {
   display: inline-flex;
