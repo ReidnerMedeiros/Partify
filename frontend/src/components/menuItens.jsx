@@ -116,11 +116,11 @@ export function montarSecoesMenu(usuario) {
 }
 
 /* Indica se o item deve aparecer destacado para a rota atual. Telas "filhas"
-   destacam o item de origem: visualizar/editar catálogo → Consultar Catálogos,
+   destacam o item de origem: editar catálogo → Consultar Catálogos,
    Histórico do Sistema → Gestão de Usuários e Sistema. */
 export function itemEstaAtivo(item, caminho) {
   if (caminho === item.rota) return true;
-  if (item.chave === "consultar-catalogos") return /^\/catalogos\/[^/]+\/(visualizar|editar)$/.test(caminho);
+  if (item.chave === "consultar-catalogos") return /^\/catalogos\/[^/]+\/editar$/.test(caminho);
   if (item.chave === "gestao-usuarios-sistema") return caminho === "/log-sistema";
   return false;
 }

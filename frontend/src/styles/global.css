@@ -779,6 +779,49 @@ a {
   max-width: 420px;
 }
 
+/* --- RF09: modal com a lista de peças de um catálogo (somente leitura) --- */
+.modal-box--pecas {
+  max-width: 760px;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-pecas__cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.modal-pecas__cabecalho h3 {
+  margin: 0 0 4px;
+}
+
+.modal-pecas__fechar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  color: var(--partify-text-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal-pecas__fechar:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.modal-pecas__corpo {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 /* --- RF06: Importar Catálogo (dropzone de upload) --- */
 .form-row {
   display: flex;

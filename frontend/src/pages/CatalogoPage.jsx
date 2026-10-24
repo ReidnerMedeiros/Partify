@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "../components/TopBar.jsx";
 import ConfirmModal from "../components/ConfirmModal.jsx";
+import PecasCatalogoModal from "../components/PecasCatalogoModal.jsx";
 import { listarCatalogosValidados, excluirCatalogoValidado, buscarArquivoCatalogo } from "../services/catalogoService.js";
 import { extrairErroApi } from "../services/api.js";
 
@@ -74,8 +75,8 @@ function descreverCatalogo(catalogo) {
  * Lista os catálogos já validados (RF08), um cartão por documento, com filtros
  * por marca/modelo/código da peça (com o código, aparecem os catálogos que
  * contêm aquela peça). A busca peça a peça fica em "Consultar Componentes"
- * (RF11). Ações por cartão: Ver peças (tela só de leitura), Editar (A3), Baixar
- * PDF e Excluir o catálogo inteiro. Catálogos pendentes/irresolúveis têm sua
+ * (RF11). Ações por cartão: Ver peças (modal só de leitura, sem sair da tela),
+ * Editar (A3), Baixar PDF e Excluir o catálogo inteiro. Catálogos pendentes/irresolúveis têm sua
  * própria fila em "Documentos Pendentes" (RF10, ver DocumentosPendentesPage).
  */
 function CatalogoPage() {
@@ -90,6 +91,7 @@ function CatalogoPage() {
   const [modelo, setModelo] = useState("");
   const [codigo, setCodigo] = useState("");
 
+  const [catalogoParaVerPecas, setCatalogoParaVerPecas] = useState(null);
   const [catalogoParaExcluir, setCatalogoParaExcluir] = useState(null);
   const [excluindo, setExcluindo] = useState(false);
   const [baixandoId, setBaixandoId] = useState(null);
@@ -222,7 +224,7 @@ function CatalogoPage() {
                     <button
                       type="button"
                       className="pendente-card__arquivo catalogo-card__titulo"
-                      onClick={() => navigate(`/catalogos/${catalogo.id}/visualizar`)}
+                      onClick={() => setCatalogoParaVerPecas(catalogo)}
                       title="Ver peças deste catálogo"
                     >
                       <IconFile />
@@ -238,7 +240,7 @@ function CatalogoPage() {
                     <button
                       type="button"
                       className="btn btn--outline btn--sm"
-                      onClick={() => navigate(`/catalogos/${catalogo.id}/visualizar`)}
+                      onClick={() => setCatalogoParaVerPecas(catalogo)}
                     >
                       <IconEye /> Ver peças
                     </button>
@@ -283,6 +285,21 @@ function CatalogoPage() {
           )}
         </div>
       </div>
+
+      {catalogoParaVerPecas && (
+        <PecasCatalogoModal
+          catalogoId={catalogoParaVerPecas.id}
+          titulo={descreverCatalogo(catalogoParaVerPecas)}
+          subtitulo={[
+            catalogoParaVerPecas.nomeArquivo,
+            catalogoParaVerPecas.tensao ? (ROTULO_TENSAO[catalogoParaVerPecas.tensao] ?? catalogoParaVerPecas.tensao) : null,
+            `${catalogoParaVerPecas.totalPecas} ${catalogoParaVerPecas.totalPecas === 1 ? "peça" : "peças"}`,
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+          onFechar={() => setCatalogoParaVerPecas(null)}
+        />
+      )}
 
       {catalogoParaExcluir && (
         <ConfirmModal
