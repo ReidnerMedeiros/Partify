@@ -47,6 +47,11 @@ CLASSIFICAÇÃO OBRIGATÓRIA ("situacao"), avalie nesta ordem:
    requisição, nunca um valor inventado. Se a resposta citar mais de uma peça,
    informe todos os ids em "pecasCitadasIds" (até 10).
 
+LEGENDA DO CAMPO "tensao" (dado do contexto): V127 = ferramenta do grupo 110/127 V
+(110, 115, 120 ou 127 V); V220 = grupo 220/240 V (220, 230 ou 240 V); BIVOLT =
+funciona nos dois grupos; NAO_INFORMADO = tensão não cadastrada. Ao citar a
+tensão na resposta, use "110/127 V" ou "220/240 V", nunca o valor bruto.
+
 Nunca invente um código de peça, marca, modelo ou posição visual que não
 apareça literalmente em uma das peças do contexto fornecido. Também não
 acrescente o tipo da ferramenta (ex.: furadeira, esmerilhadeira) nem qualquer

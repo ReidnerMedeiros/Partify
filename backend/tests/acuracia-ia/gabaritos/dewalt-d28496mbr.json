@@ -2,7 +2,7 @@
   "arquivo": "dewalt-d28496mbr.pdf",
   "marca": "DeWalt",
   "modelo": "D28496MBR",
-  "tensao": "V120",
+  "tensao": "V127",
   "notas": "Ferramenta: Esmerilhadeira 9\", Tipo 3, catálogo CAT-0133 (novembro/2005). A posição 4 tem duas peças alternativas (com e sem limite de desgaste) — ambas mantidas no gabarito com a mesma posicaoVisual '4', já que a extração pode retornar qualquer uma das duas (ou ambas) como correta.",
   "pecas": [
     { "codigo": "187167-00", "descricao": "ROTOR 60mm 120V", "posicaoVisual": "1" },

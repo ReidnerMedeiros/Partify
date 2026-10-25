@@ -37,10 +37,10 @@ describe("descreverRegistroAfetado (coluna Registro Afetado do RF13)", () => {
   test("validação e edição de catálogo mostram marca, modelo e tensão", () => {
     const ferramenta = { marca: "Bosch", modelo: "GBM 10", tensao: "V220" };
     expect(descreverRegistroAfetado({ tipoAcao: "VALIDACAO_HITL", registroAfetado: "c-1", detalhes: ferramenta }, nomes)).toBe(
-      "Catálogo Bosch GBM 10 (220V)"
+      "Catálogo Bosch GBM 10 (220/240V)"
     );
     expect(descreverRegistroAfetado({ tipoAcao: "EDICAO_REGISTRO", registroAfetado: "c-1", detalhes: { novo: ferramenta } }, nomes)).toBe(
-      "Catálogo Bosch GBM 10 (220V)"
+      "Catálogo Bosch GBM 10 (220/240V)"
     );
   });
 

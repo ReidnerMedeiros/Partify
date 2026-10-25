@@ -7,8 +7,8 @@ import { listarCatalogosValidados, excluirCatalogoValidado, buscarArquivoCatalog
 import { extrairErroApi } from "../services/api.js";
 
 const ROTULO_TENSAO = {
-  V127: "127V",
-  V220: "220V",
+  V127: "110/127V",
+  V220: "220/240V",
   BIVOLT: "Bivolt",
   NAO_INFORMADO: "Não informado",
 };

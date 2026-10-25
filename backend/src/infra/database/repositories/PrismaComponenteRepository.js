@@ -1,5 +1,6 @@
 const { Prisma } = require("@prisma/client");
 const { ComponenteRepository } = require("../../../domain/repositories/ComponenteRepository");
+const { tensoesCompativeis } = require("../../../domain/enums/EnumTensao");
 
 function paraComponente(registro) {
   return {
@@ -33,7 +34,7 @@ class PrismaComponenteRepository extends ComponenteRepository {
     // combinadas num único objeto, senão o segundo spread sobrescreve o primeiro.
     const filtroVersaoTensao = {
       ...(marca ? { ferramenta: { marca: { nome: marca } } } : {}),
-      ...(tensao ? { tensao } : {}),
+      ...(tensao ? { tensao: { in: tensoesCompativeis(tensao) } } : {}),
     };
 
     const registros = await this.prisma.peca.findMany({
@@ -56,7 +57,7 @@ class PrismaComponenteRepository extends ComponenteRepository {
 
     const filtros = [];
     if (marca) filtros.push(Prisma.sql`AND m.nome = ${marca}`);
-    if (tensao) filtros.push(Prisma.sql`AND vt.tensao::text = ${tensao}`);
+    if (tensao) filtros.push(Prisma.sql`AND vt.tensao::text IN (${Prisma.join(tensoesCompativeis(tensao))})`);
     if (modelos?.length) filtros.push(Prisma.sql`AND f.modelo IN (${Prisma.join(modelos)})`);
 
     const linhas = await this.prisma.$queryRaw`

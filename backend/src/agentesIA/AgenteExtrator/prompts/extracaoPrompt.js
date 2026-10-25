@@ -80,6 +80,14 @@ em todas as linhas, não só nas primeiras.
 
 TENSÃO: normalize para exatamente um destes valores: ${Object.values(EnumTensao).join(", ")}.
 Use NAO_INFORMADO quando o documento não indicar a tensão.
+Regra de agrupamento (a tensão nominal varia entre fabricantes e regiões, então
+classifique pelo grupo, não pelo número exato impresso no documento):
+- grupo 110/127 V (110 V, 115 V, 120 V ou 127 V): use V127;
+- grupo 220/240 V (220 V, 230 V ou 240 V): use V220;
+- documento que indique as duas tensões (ex.: "110/220 V", "127/220 V",
+  "115-230 V") ou a palavra "bivolt": use BIVOLT;
+- qualquer outro valor (ex.: baterias de 12 V, 18 V, 20 V) ou ausência de
+  informação: use NAO_INFORMADO.
 
 CONFIANÇA (0 a 100, por campo): depois de extrair cada campo (marca, modelo,
 tensão, e cada peça individualmente), compare o que você extraiu com o conteúdo

@@ -11,7 +11,7 @@ const MENSAGEM_SEM_CONTEXTO =
   "Não consegui identificar contexto técnico relevante para essa pergunta. Tente reformular incluindo marca, modelo ou o nome da peça.";
 
 const SUGESTOES = [
-  "Qual o induzido correto para a Makita 4100NH 127V?",
+  "Qual o induzido correto para a Makita 4100NH 110V?",
   "Qual o código do rolamento da Bosch GWS 060?",
   "Quais peças usam a escova de carvão?",
 ];

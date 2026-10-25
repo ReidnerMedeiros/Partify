@@ -7,12 +7,12 @@ import { extrairErroApi } from "../services/api.js";
 const MARCAS = ["Bosch", "Makita", "DeWalt"];
 
 const OPCOES_TENSAO = [
-  { valor: "V127", rotulo: "127V" },
-  { valor: "V220", rotulo: "220V" },
+  { valor: "V127", rotulo: "110/127V" },
+  { valor: "V220", rotulo: "220/240V" },
   { valor: "BIVOLT", rotulo: "Bivolt" },
 ];
 
-const ROTULO_TENSAO = { V127: "127V", V220: "220V", BIVOLT: "Bivolt", NAO_INFORMADO: "Não informado" };
+const ROTULO_TENSAO = { V127: "110/127V", V220: "220/240V", BIVOLT: "Bivolt", NAO_INFORMADO: "Não informado" };
 
 function IconSearch() {
   return (

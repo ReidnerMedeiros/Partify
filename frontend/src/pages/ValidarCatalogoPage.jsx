@@ -6,8 +6,8 @@ import { validarCatalogo } from "../services/catalogoService.js";
 import { extrairErroApi } from "../services/api.js";
 
 const OPCOES_TENSAO = [
-  { valor: "V127", rotulo: "127V" },
-  { valor: "V220", rotulo: "220V" },
+  { valor: "V127", rotulo: "110/127V" },
+  { valor: "V220", rotulo: "220/240V" },
   { valor: "BIVOLT", rotulo: "Bivolt" },
   { valor: "NAO_INFORMADO", rotulo: "Não informado" },
 ];
