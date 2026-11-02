@@ -285,7 +285,7 @@ class PrismaCatalogoRepository extends CatalogoRepository {
         catalogo: { status: "VALIDADO" },
         ...(codigo ? { codigo: { contains: codigo, mode: "insensitive" } } : {}),
         ...(modelo ? { versaoTensao: { ferramenta: { modelo: { contains: modelo, mode: "insensitive" } } } } : {}),
-        ...(marca ? { versaoTensao: { ferramenta: { marca: { nome: marca } } } } : {}),
+        ...(marca ? { versaoTensao: { ferramenta: { marca: { nome: { equals: marca, mode: "insensitive" } } } } } : {}),
       },
       include: {
         versaoTensao: { include: { ferramenta: { include: { marca: true } } } },
@@ -323,7 +323,7 @@ class PrismaCatalogoRepository extends CatalogoRepository {
     if (modelo) {
       condicoesDePeca.push({ versaoTensao: { ferramenta: { modelo: { contains: modelo, mode: "insensitive" } } } });
     }
-    if (marca) condicoesDePeca.push({ versaoTensao: { ferramenta: { marca: { nome: marca } } } });
+    if (marca) condicoesDePeca.push({ versaoTensao: { ferramenta: { marca: { nome: { equals: marca, mode: "insensitive" } } } } });
 
     const registros = await this.prisma.catalogo.findMany({
       where: {

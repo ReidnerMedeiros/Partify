@@ -33,7 +33,8 @@ class PrismaComponenteRepository extends ComponenteRepository {
     // Marca e tensão ficam na mesma relação (versaoTensao): precisam ser
     // combinadas num único objeto, senão o segundo spread sobrescreve o primeiro.
     const filtroVersaoTensao = {
-      ...(marca ? { ferramenta: { marca: { nome: marca } } } : {}),
+      // Case-insensitive: a marca salva pode vir como "BOSCH" do catálogo, e o filtro envia "Bosch".
+      ...(marca ? { ferramenta: { marca: { nome: { equals: marca, mode: "insensitive" } } } } : {}),
       ...(tensao ? { tensao: { in: tensoesCompativeis(tensao) } } : {}),
     };
 
@@ -56,7 +57,7 @@ class PrismaComponenteRepository extends ComponenteRepository {
     const vetorLiteral = `[${vetor.join(",")}]`;
 
     const filtros = [];
-    if (marca) filtros.push(Prisma.sql`AND m.nome = ${marca}`);
+    if (marca) filtros.push(Prisma.sql`AND LOWER(m.nome) = LOWER(${marca})`);
     if (tensao) filtros.push(Prisma.sql`AND vt.tensao::text IN (${Prisma.join(tensoesCompativeis(tensao))})`);
     if (modelos?.length) filtros.push(Prisma.sql`AND f.modelo IN (${Prisma.join(modelos)})`);
 
