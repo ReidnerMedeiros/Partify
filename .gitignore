@@ -88,6 +88,14 @@ backend/dev-server.log
 /backend/n2/
 /backend/scripts/baselineSessao.js
 
+# Material de apoio do TCC (avaliações, questionário, diagramas, rascunho de SQL)
+# — uso pessoal do autor, não faz parte do código do projeto.
+/Avaliacao_Comparativa_Partify.doc
+/Questionario_SUS_Partify.doc
+/diagrama_classes_partify.drawio
+/diagrama_er_partify.drawio
+/novas_tabelas.sql
+
 # Config local do Claude Code (específica desta máquina/usuário)
 .claude/
 
