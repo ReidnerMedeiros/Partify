@@ -69,7 +69,7 @@ const { UsuarioController } = require("../../http/controllers/UsuarioController"
 const { CatalogoController } = require("../../http/controllers/CatalogoController");
 const { ConsultaController } = require("../../http/controllers/ConsultaController");
 const { LogAuditoriaController } = require("../../http/controllers/LogAuditoriaController");
-const { criarAuthMiddleware, criarExigirAdministrador } = require("../../http/middlewares/authMiddleware");
+const { criarAuthMiddleware, criarExigirAdministrador, criarExigirPerfil } = require("../../http/middlewares/authMiddleware");
 
 // --- Infra (adaptadores concretos) -----------------------------------------
 const empresaRepository = new PrismaEmpresaRepository(prisma);
@@ -113,13 +113,24 @@ const emailService = process.env.BREVO_API_KEY
 // RF06 — em produção (SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY configurados) salva os
 // PDFs no Supabase Storage; em dev, salva em disco dentro do próprio backend
 // (backend/storage/), sem exigir um bucket configurado para testar o fluxo localmente.
-const fileStorageService = process.env.SUPABASE_URL
+const storageRemoto = process.env.SUPABASE_URL
   ? new SupabaseStorageService({
       url: process.env.SUPABASE_URL,
       serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
       bucket: process.env.SUPABASE_STORAGE_BUCKET,
     })
   : new LocalFileStorageService();
+
+// ATIVIDADE N2 (ESW441), FORA DO ESCOPO DO PARTIFY — só na branch da atividade.
+// N2_CACHE_PDF=1 liga o cache em arquivo do PDF (backend/n2/); sem a variável, nada muda.
+const fileStorageService =
+  process.env.N2_CACHE_PDF === "1"
+    ? new (require("../../../n2/ArquivoCacheStorageService").ArquivoCacheStorageService)({
+        storageRemoto,
+        diretorio: require("path").join(__dirname, "..", "..", "..", "n2", "cache", "pdfs"),
+        aoEvento: (mensagem) => console.log(`[N2-CACHE] ${mensagem}`), // eslint-disable-line no-console
+      })
+    : storageRemoto;
 
 // RF07/RF08 — modelo configurável via .env porque os identificadores de modelo da
 // Gemini API mudam com frequência; confirme o valor atual em
@@ -288,6 +299,9 @@ const logAuditoriaController = new LogAuditoriaController({ consultarLogAuditori
 // --- Middlewares ---------------------------------------------------------------
 const authMiddleware = criarAuthMiddleware(tokenService, sessaoRevogadaRepository, logAuditoriaRepository);
 const exigirAdministrador = criarExigirAdministrador(logAuditoriaRepository);
+// Gestão de catálogos (importar, validar, editar, excluir, pendentes): Administrador e
+// Técnico. O Vendedor só consulta (catálogos, componentes e consulta técnica).
+const exigirGestaoCatalogo = criarExigirPerfil(logAuditoriaRepository)("ADMINISTRADOR", "TECNICO");
 
 module.exports = {
   empresaController,
@@ -298,6 +312,7 @@ module.exports = {
   logAuditoriaController,
   authMiddleware,
   exigirAdministrador,
+  exigirGestaoCatalogo,
   // Expostos também os adaptadores de infra e serviços (além dos controllers
   // acima, já usados pelas rotas em produção) — usado pelos testes de API
   // (backend/tests/api/) para popular/inspecionar o estado em memória por

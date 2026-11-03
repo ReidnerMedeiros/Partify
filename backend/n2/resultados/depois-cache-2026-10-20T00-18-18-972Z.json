@@ -1,0 +1,39 @@
+{
+  "data": "2026-10-20T00:18:18.972Z",
+  "operacao": "ArquivoCacheStorageService.obterBuffer(caminhoArquivo), leitura do PDF pelo cache em arquivo",
+  "storageRemoto": "Supabase Storage (remoto)",
+  "catalogo": {
+    "id": "02f5b497-d71f-42cf-823c-73cbf44f077a",
+    "nomeArquivo": "0601107078.pdf"
+  },
+  "maquina": {
+    "host": "DESKTOP-0EJL52T",
+    "so": "Windows_NT 10.0.19045 (x64)",
+    "cpu": "AMD Ryzen 5 5600 6-Core Processor               x12",
+    "memoriaGB": 63.9,
+    "node": "v24.18.0"
+  },
+  "tamanhoDosDados": {
+    "pdfBytes": 97556,
+    "pdfKB": 95.3
+  },
+  "miss": {
+    "ms": 2200.989
+  },
+  "hit": {
+    "n": 200,
+    "aquecimento": 3,
+    "totalMs": 39.77,
+    "mediaMs": 0.1988,
+    "medianaMs": 0.1874,
+    "p95Ms": 0.2604,
+    "minMs": 0.1508,
+    "maxMs": 0.9261
+  },
+  "estatisticasCache": {
+    "hits": 203,
+    "misses": 1,
+    "erros": 0,
+    "arquivosNoCache": 1
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "data": "2026-10-10T23:47:51.264Z",
+  "operacao": "FileStorageService.obterBuffer(caminhoArquivo) — leitura do PDF do catálogo",
+  "storage": "Supabase Storage (remoto)",
+  "catalogo": {
+    "id": "02f5b497-d71f-42cf-823c-73cbf44f077a",
+    "nomeArquivo": "0601107078.pdf"
+  },
+  "maquina": {
+    "host": "DESKTOP-0EJL52T",
+    "so": "Windows_NT 10.0.19045 (x64)",
+    "cpu": "AMD Ryzen 5 5600 6-Core Processor               x12",
+    "memoriaGB": 63.9,
+    "node": "v24.18.0"
+  },
+  "tamanhoDosDados": {
+    "pdfBytes": 97556,
+    "pdfKB": 95.3
+  },
+  "medicao": {
+    "n": 200,
+    "aquecimento": 3,
+    "totalMs": 107038.41,
+    "mediaMs": 535.192,
+    "medianaMs": 516.488,
+    "p95Ms": 680.253,
+    "minMs": 235.824,
+    "maxMs": 1105.266,
+    "vazaoMBs": 0.17
+  }
+}

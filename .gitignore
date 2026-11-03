@@ -85,8 +85,10 @@ backend/dev-server.log
 # localmente e será apagada depois. Ver ATIVIDADE_N2_FORA_DO_ESCOPO.md.
 /ATIVIDADE_N2_FORA_DO_ESCOPO.md
 /PLANO_PROJETO_N2.md
-/backend/n2/
 /backend/scripts/baselineSessao.js
+# NESTA BRANCH (n2-cache-pdf) a pasta backend/n2/ é versionada, porque é o código
+# entregue na atividade. Só a pasta do cache (cópias dos PDFs) fica de fora.
+/backend/n2/cache/
 
 # Material de apoio do TCC (avaliações, questionário, diagramas, rascunho de SQL)
 # — uso pessoal do autor, não faz parte do código do projeto.

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Ficha de medição — Projeto N2 (ESW441)</title>
+<style>
+  @page { size: A4; margin: 14mm; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5pt; color: #111; line-height: 1.35; }
+  h1 { font-size: 15pt; margin: 0 0 2px; }
+  h2 { font-size: 11pt; margin: 12px 0 4px; border-bottom: 1px solid #1a4db8; color: #1a4db8; }
+  .sub { color: #444; font-size: 9.5pt; margin-bottom: 6px; }
+  table { border-collapse: collapse; width: 100%; margin: 4px 0; }
+  th, td { border: 1px solid #999; padding: 4px 6px; text-align: left; vertical-align: top; }
+  th { background: #e8eefc; }
+  td.n, th.n { text-align: right; white-space: nowrap; }
+  ul { margin: 3px 0 3px 18px; padding: 0; }
+  .destaque { background: #f3f7ff; font-weight: bold; }
+  .nota { font-size: 9.5pt; color: #333; }
+</style>
+</head>
+<body>
+
+<div class="sub">Universidade de Rio Verde | Disciplina ESW441 | Turma A | Prof. Gustavo Martins Lima</div>
+<h1>Projeto N2 - Semana 4: Ficha de medição (cache em arquivo para o PDF do catálogo)</h1>
+<div class="sub"><strong>Aluno(s):</strong> Reidner dos Santos Medeiros (trabalho individual, como nas semanas 1 e 2) &nbsp; <strong>Data:</strong> 03/11/2026</div>
+
+<h2>1. Sistema e ponto de dor</h2>
+<p><strong>Sistema:</strong> Partify (gestão de catálogos técnicos de peças com IA). <strong>Ponto de dor:</strong> a cada "Ver Vista Explodida" o sistema baixa o PDF inteiro do Supabase Storage pela internet, mesmo o arquivo nunca mudando depois de salvo.<br>
+<strong>Camada nova:</strong> cache em arquivo (decorador do storage), padrão cache-aside. Chave: <code>sha256(caminhoArquivo)</code>; arquivo <code>cache/pdfs/&lt;chave&gt;.pdf</code> + índice em memória (<code>Map</code>). Invalidação: ao excluir, apaga primeiro no Supabase e depois no cache; TTL de 7 dias e limite de 200 MB (LRU) como rede de segurança.</p>
+
+<h2>2. Condições do teste (iguais no antes e no depois)</h2>
+<table>
+  <tr><th style="width:30%">Máquina</th><td>DESKTOP-0EJL52T · Windows 10 (x64) · AMD Ryzen 5 5600 (12 threads) · 63,9 GB RAM · Node v24.18.0 · internet doméstica (a mesma do baseline da semana 1)</td></tr>
+  <tr><th>Dados</th><td>PDF "0601107078.pdf", 97.556 bytes (95,3 KB), no Supabase Storage (remoto)</td></tr>
+  <tr><th>Operação medida</th><td><code>obterBuffer(caminhoArquivo)</code>: leitura do PDF do catálogo</td></tr>
+  <tr><th>N e aquecimento</th><td>N = 200 leituras, 3 de aquecimento descartadas; tempo por leitura com <code>performance.now()</code></td></tr>
+  <tr><th>Scripts</th><td><code>n2/baselineArquivoPdf.js</code> (antes) · <code>n2/medirComCache.js</code> (depois) · resultados em <code>n2/resultados/*.json</code></td></tr>
+</table>
+
+<h2>3. Resultado antes × depois</h2>
+<table>
+  <tr><th>Operação</th><th class="n">Antes (sem cache)</th><th class="n">Depois</th><th class="n">Ganho (antes ÷ depois)</th></tr>
+  <tr class="destaque"><td>Leitura repetida do PDF — HIT, média</td><td class="n">535,19 ms</td><td class="n">0,199 ms</td><td class="n">~2.690×</td></tr>
+  <tr><td>Mediana</td><td class="n">516,49 ms</td><td class="n">0,187 ms</td><td class="n">~2.760×</td></tr>
+  <tr><td>p95</td><td class="n">680,25 ms</td><td class="n">0,260 ms</td><td class="n">~2.610×</td></tr>
+  <tr><td>Mínimo / máximo</td><td class="n">235,82 / 1105,27 ms</td><td class="n">0,151 / 0,926 ms</td><td class="n">—</td></tr>
+  <tr><td>Primeira leitura — MISS (1 medida)</td><td class="n">535,19 ms (média)</td><td class="n">2.200,99 ms</td><td class="n">~0,24× (mais lenta)</td></tr>
+</table>
+<p class="nota"><strong>Sobre o MISS:</strong> é uma única medida e inclui baixar do Supabase, gravar em arquivo temporário e renomear, além do custo da primeira conexão. Ele fica acima do máximo do baseline (1,1 s), então é um pior caso pago uma vez por arquivo; todas as leituras seguintes são HIT. Contadores do cache na execução: 203 HITs, 1 MISS, 0 erros, 1 arquivo.</p>
+
+<h2>4. Durabilidade</h2>
+<ul>
+  <li>Os PDFs ficam em disco: sobrevivem a reinício do processo (o índice é remontado varrendo a pasta na subida; temporários e expirados são apagados).</li>
+  <li>A fonte da verdade continua sendo o Supabase Storage. Perder a pasta do cache só causa MISS e novo download, nunca perda de dado.</li>
+</ul>
+
+<h2>5. Trade-offs e limites</h2>
+<ul>
+  <li><strong>Ganhou:</strong> leitura ~2.700× mais rápida e menos tráfego saindo do Supabase (o plano gratuito tem limite). <strong>Paga:</strong> espaço em disco (limitado a 200 MB), risco de dado velho (resolvido pela invalidação na exclusão e pelo TTL) e mais código para manter.</li>
+  <li><strong>Por que funciona aqui:</strong> o PDF é imutável (caminho único <code>uuid-nome</code>, upload com <code>upsert: false</code>); só existem criar e excluir.</li>
+  <li><strong>Quando não ajudaria:</strong> dado que muda a cada leitura, arquivos lidos uma única vez (baixa releitura) ou casos que exigem exatidão em tempo real.</li>
+  <li><strong>Limitações da medição:</strong> medido no PC, não na VPS; o ganho do HIT mede a função isolada (disco local, sem rede e sem HTTP); o MISS é uma amostra única.</li>
+</ul>
+
+</body>
+</html>
