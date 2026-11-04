@@ -18,7 +18,9 @@ function errorHandler(err, req, res, next) {
   }
 
   if (err instanceof DomainError) {
-    return res.status(err.statusCode).json({ erro: err.message });
+    // `codigo` (opcional) deixa o front-end reagir a um caso específico, como a
+    // empresa desativada que o administrador pode reativar no login.
+    return res.status(err.statusCode).json({ erro: err.message, ...(err.codigo ? { codigo: err.codigo } : {}) });
   }
 
   // RF06 — upload maior que o limite configurado no multer (uploadMiddleware.js).

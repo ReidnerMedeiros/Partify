@@ -4,7 +4,15 @@
  */
 import { createPortal } from "react-dom";
 
-function ConfirmModal({ titulo, mensagem, confirmando, textoConfirmar = "Confirmar", onConfirmar, onCancelar }) {
+function ConfirmModal({
+  titulo,
+  mensagem,
+  confirmando,
+  textoConfirmar = "Confirmar",
+  classeConfirmar = "btn btn--danger-outline",
+  onConfirmar,
+  onCancelar,
+}) {
   // Renderizado direto no <body> (portal): assim a camada do modal não fica presa
   // dentro da barra lateral ou da área de conteúdo, que criam camadas próprias e
   // podiam deixar o modal escondido atrás da tela.
@@ -17,7 +25,7 @@ function ConfirmModal({ titulo, mensagem, confirmando, textoConfirmar = "Confirm
           <button type="button" className="btn btn--outline" onClick={onCancelar} disabled={confirmando}>
             Cancelar
           </button>
-          <button type="button" className="btn btn--danger-outline" onClick={onConfirmar} disabled={confirmando}>
+          <button type="button" className={classeConfirmar} onClick={onConfirmar} disabled={confirmando}>
             {confirmando ? "Aguarde..." : textoConfirmar}
           </button>
         </div>

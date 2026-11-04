@@ -97,6 +97,25 @@ describe("AutenticarUsuarioUseCase — RF02, fluxo básico (Login)", () => {
     expect(ultimoLog.detalhes.motivo).toBe("instancia_desativada");
   });
 
+  test("empresa desativada + administrador: o erro carrega o código que permite oferecer a reativação", async () => {
+    const ctx = montarUseCase();
+    await seedUsuarioEEmpresa(ctx, { statusEmpresa: StatusEmpresa.INATIVA });
+
+    await expect(ctx.useCase.execute({ login: "admin", senha: "senha123" })).rejects.toMatchObject({
+      codigo: "EMPRESA_INATIVA_REATIVAVEL",
+    });
+  });
+
+  test("empresa desativada + usuário que não é administrador: sem código de reativação", async () => {
+    const ctx = montarUseCase();
+    const { usuario } = await seedUsuarioEEmpresa(ctx, { statusEmpresa: StatusEmpresa.INATIVA });
+    usuario.perfil = "VENDEDOR";
+
+    const erro = await ctx.useCase.execute({ login: "admin", senha: "senha123" }).catch((e) => e);
+    expect(erro).toBeInstanceOf(UnauthorizedError);
+    expect(erro.codigo).toBeUndefined();
+  });
+
   test("rejeita login quando o usuário aponta para uma empresa inexistente", async () => {
     const ctx = montarUseCase();
     await seedUsuarioEEmpresa(ctx);

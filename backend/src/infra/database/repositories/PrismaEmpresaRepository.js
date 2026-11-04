@@ -87,6 +87,14 @@ class PrismaEmpresaRepository extends EmpresaRepository {
     });
     return paraEntidadeEmpresa(registro);
   }
+
+  async reativar(id) {
+    const registro = await this.prisma.empresa.update({
+      where: { id },
+      data: { status: "ATIVA" },
+    });
+    return paraEntidadeEmpresa(registro);
+  }
 }
 
 module.exports = { PrismaEmpresaRepository };

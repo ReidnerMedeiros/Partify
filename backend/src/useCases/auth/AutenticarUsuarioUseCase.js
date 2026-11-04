@@ -54,6 +54,13 @@ class AutenticarUsuarioUseCase {
         registroAfetado: usuario.id,
         detalhes: { motivo: "instancia_desativada" },
       });
+      // Só o Administrador (credenciais já conferidas acima) pode reativar a empresa:
+      // o front-end usa o código abaixo para perguntar "Deseja reativar a empresa?".
+      if (empresa && usuario.perfil === "ADMINISTRADOR") {
+        const erroReativavel = new UnauthorizedError("Esta empresa está desativada. Deseja reativá-la?");
+        erroReativavel.codigo = "EMPRESA_INATIVA_REATIVAVEL";
+        throw erroReativavel;
+      }
       throw new UnauthorizedError("Esta instância está desativada. Contate o suporte para mais informações.");
     }
 

@@ -10,7 +10,9 @@ class AuthController {
     solicitarRecuperacaoSenhaUseCase,
     redefinirSenhaUseCase,
     alterarSenhaUseCase,
+    reativarEmpresaUseCase,
   }) {
+    this.reativarEmpresaUseCase = reativarEmpresaUseCase;
     this.autenticarUsuarioUseCase = autenticarUsuarioUseCase;
     this.logoutUseCase = logoutUseCase;
     this.solicitarRecuperacaoSenhaUseCase = solicitarRecuperacaoSenhaUseCase;
@@ -24,6 +26,15 @@ class AuthController {
     const { token, usuario } = await this.autenticarUsuarioUseCase.execute({ login, senha });
 
     return res.status(200).json({ token, usuario });
+  };
+
+  // POST /auth/reativar-empresa — RF01, reativação (pública: confere login e senha do
+  // administrador no próprio use case, já que a empresa desativada bloqueia o login)
+  reativarEmpresa = async (req, res) => {
+    const { login, senha } = req.body;
+    await this.reativarEmpresaUseCase.execute({ login, senha });
+
+    return res.status(200).json({ mensagem: "Empresa reativada com sucesso." });
   };
 
   // POST /auth/logout — RF02, fluxo alternativo A1 (autenticado)

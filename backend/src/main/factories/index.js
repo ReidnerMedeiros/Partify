@@ -36,6 +36,7 @@ const { CriarEmpresaUseCase } = require("../../useCases/empresa/CriarEmpresaUseC
 const { ConsultarEmpresaUseCase } = require("../../useCases/empresa/ConsultarEmpresaUseCase");
 const { AtualizarEmpresaUseCase } = require("../../useCases/empresa/AtualizarEmpresaUseCase");
 const { DesativarEmpresaUseCase } = require("../../useCases/empresa/DesativarEmpresaUseCase");
+const { ReativarEmpresaUseCase } = require("../../useCases/empresa/ReativarEmpresaUseCase");
 const { AutenticarUsuarioUseCase } = require("../../useCases/auth/AutenticarUsuarioUseCase");
 const { LogoutUseCase } = require("../../useCases/auth/LogoutUseCase");
 const { SolicitarRecuperacaoSenhaUseCase } = require("../../useCases/auth/SolicitarRecuperacaoSenhaUseCase");
@@ -173,6 +174,12 @@ const autenticarUsuarioUseCase = new AutenticarUsuarioUseCase({
   tokenService,
   logAuditoriaRepository,
 });
+const reativarEmpresaUseCase = new ReativarEmpresaUseCase({
+  usuarioRepository,
+  empresaRepository,
+  hashService,
+  logAuditoriaRepository,
+});
 const logoutUseCase = new LogoutUseCase({ sessaoRevogadaRepository, logAuditoriaRepository });
 const solicitarRecuperacaoSenhaUseCase = new SolicitarRecuperacaoSenhaUseCase({
   usuarioRepository,
@@ -259,6 +266,7 @@ const authController = new AuthController({
   solicitarRecuperacaoSenhaUseCase,
   redefinirSenhaUseCase,
   alterarSenhaUseCase,
+  reativarEmpresaUseCase,
 });
 const usuarioController = new UsuarioController({
   criarUsuarioUseCase,

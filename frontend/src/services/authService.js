@@ -7,6 +7,12 @@ async function login(login, senha) {
   return data.usuario;
 }
 
+// RF01 — reativa a empresa desativada (só o administrador, conferido pelo backend).
+async function reativarEmpresa(login, senha) {
+  const { data } = await api.post("/auth/reativar-empresa", { login, senha });
+  return data.mensagem;
+}
+
 // RF02 — fluxo alternativo A1 (Logout). Avisa o backend para invalidar a
 // sessão (jti) imediatamente antes de limpar os dados locais; se a chamada
 // falhar (ex.: sem conexão), ainda assim limpamos a sessão local.
@@ -43,6 +49,7 @@ async function alterarSenha(senhaAtual, novaSenha, confirmarNovaSenha) {
 
 export {
   login,
+  reativarEmpresa,
   logout,
   estaAutenticado,
   obterUsuario,

@@ -38,6 +38,7 @@ function extrairErroApi(error) {
   return {
     mensagem: resposta?.erro ?? "Não foi possível concluir a operação. Verifique sua conexão e tente novamente.",
     campos: resposta?.campos ?? {},
+    codigo: resposta?.codigo ?? null,
   };
 }
 

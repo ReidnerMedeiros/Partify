@@ -52,6 +52,12 @@ class FakeEmpresaRepository {
     empresa.desativar();
     return empresa;
   }
+
+  async reativar(id) {
+    const empresa = await this.buscarPorId(id);
+    empresa.reativar();
+    return empresa;
+  }
 }
 
 module.exports = { FakeEmpresaRepository };

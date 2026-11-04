@@ -122,5 +122,45 @@ describe("PATCH /empresas/me/desativar — RF01-A2 (autenticado + administrador)
       .post("/auth/login")
       .send({ login: payloadCadastro.loginAdministrador, senha: payloadCadastro.senhaAdministrador });
     expect(tentativaLogin.status).toBe(401);
+    // o administrador recebe o código que faz o front-end perguntar "Deseja reativar?"
+    expect(tentativaLogin.body.codigo).toBe("EMPRESA_INATIVA_REATIVAVEL");
+  });
+});
+
+describe("POST /auth/reativar-empresa — reativação pelo administrador", () => {
+  test("depois de desativar, o administrador reativa e volta a conseguir logar", async () => {
+    const { token, payloadCadastro } = await cadastrarEmpresaELogar(app);
+    const credenciais = { login: payloadCadastro.loginAdministrador, senha: payloadCadastro.senhaAdministrador };
+
+    await request(app).patch("/empresas/me/desativar").set("Authorization", `Bearer ${token}`).expect(200);
+    await request(app).post("/auth/login").send(credenciais).expect(401);
+
+    const reativacao = await request(app).post("/auth/reativar-empresa").send(credenciais);
+    expect(reativacao.status).toBe(200);
+
+    const login = await request(app).post("/auth/login").send(credenciais);
+    expect(login.status).toBe(200);
+    expect(login.body.token).toBeTruthy();
+  });
+
+  test("senha errada não reativa a empresa", async () => {
+    const { token, payloadCadastro } = await cadastrarEmpresaELogar(app);
+    await request(app).patch("/empresas/me/desativar").set("Authorization", `Bearer ${token}`).expect(200);
+
+    const resposta = await request(app)
+      .post("/auth/reativar-empresa")
+      .send({ login: payloadCadastro.loginAdministrador, senha: "senha-errada" });
+
+    expect(resposta.status).toBe(401);
+  });
+
+  test("empresa já ativa responde 409", async () => {
+    const { payloadCadastro } = await cadastrarEmpresaELogar(app);
+
+    const resposta = await request(app)
+      .post("/auth/reativar-empresa")
+      .send({ login: payloadCadastro.loginAdministrador, senha: payloadCadastro.senhaAdministrador });
+
+    expect(resposta.status).toBe(409);
   });
 });

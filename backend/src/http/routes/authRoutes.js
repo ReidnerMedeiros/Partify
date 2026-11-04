@@ -7,6 +7,9 @@ const router = Router();
 // RF02 — Realizar Login (fluxo básico)
 router.post("/auth/login", asyncHandler(authController.login));
 
+// RF01 — reativação da empresa desativada (o administrador confirma no login)
+router.post("/auth/reativar-empresa", asyncHandler(authController.reativarEmpresa));
+
 // RF02 — fluxo alternativo A1 (Logout), exige sessão autenticada
 router.post("/auth/logout", authMiddleware, asyncHandler(authController.logout));
 

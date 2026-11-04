@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import PartifyLogo from "../components/PartifyLogo.jsx";
 import Field from "../components/Field.jsx";
-import { login } from "../services/authService.js";
+import ConfirmModal from "../components/ConfirmModal.jsx";
+import { login, reativarEmpresa } from "../services/authService.js";
 import { extrairErroApi } from "../services/api.js";
 
 /**
@@ -16,6 +17,8 @@ function LoginPage() {
   const [valores, setValores] = useState({ login: "", senha: "" });
   const [mensagemErro, setMensagemErro] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [confirmandoReativacao, setConfirmandoReativacao] = useState(false);
+  const [reativando, setReativando] = useState(false);
   const mensagemSucesso = location.state?.mensagem;
 
   async function aoEnviar(evento) {
@@ -27,10 +30,30 @@ function LoginPage() {
       await login(valores.login, valores.senha);
       navigate("/menu", { replace: true });
     } catch (erro) {
-      const { mensagem } = extrairErroApi(erro);
-      setMensagemErro(mensagem);
+      const { mensagem, codigo } = extrairErroApi(erro);
+      // Empresa desativada e quem tentou entrar é o administrador: pergunta se quer reativar.
+      if (codigo === "EMPRESA_INATIVA_REATIVAVEL") {
+        setConfirmandoReativacao(true);
+      } else {
+        setMensagemErro(mensagem);
+      }
     } finally {
       setEnviando(false);
+    }
+  }
+
+  async function confirmarReativacao() {
+    setReativando(true);
+    setMensagemErro("");
+    try {
+      await reativarEmpresa(valores.login, valores.senha);
+      await login(valores.login, valores.senha);
+      navigate("/menu", { replace: true });
+    } catch (erro) {
+      setMensagemErro(extrairErroApi(erro).mensagem);
+      setConfirmandoReativacao(false);
+    } finally {
+      setReativando(false);
     }
   }
 
@@ -78,6 +101,18 @@ function LoginPage() {
           Novo estabelecimento? <Link to="/cadastro">Cadastrar empresa</Link>
         </p>
       </div>
+
+      {confirmandoReativacao && (
+        <ConfirmModal
+          titulo="Empresa desativada"
+          mensagem="Esta empresa está desativada. Deseja reativar a empresa? Todos os dados foram mantidos e os usuários voltam a ter acesso."
+          textoConfirmar="Reativar empresa"
+          classeConfirmar="btn btn--primary"
+          confirmando={reativando}
+          onConfirmar={confirmarReativacao}
+          onCancelar={() => setConfirmandoReativacao(false)}
+        />
+      )}
     </div>
   );
 }

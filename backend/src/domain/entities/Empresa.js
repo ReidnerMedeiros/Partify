@@ -24,6 +24,10 @@ class Empresa {
     this.status = StatusEmpresa.INATIVA;
   }
 
+  reativar() {
+    this.status = StatusEmpresa.ATIVA;
+  }
+
   atualizarDados({ nome, telefone, email }) {
     if (nome !== undefined) this.nome = nome;
     if (telefone !== undefined) this.telefone = telefone;
