@@ -65,6 +65,25 @@ function formatarData(iso) {
   return iso ? new Date(iso).toLocaleDateString("pt-BR") : "—";
 }
 
+/**
+ * Marcas únicas para o filtro: "Bosch", "BOSCH" e "bosch " viram uma só opção.
+ * Para o rótulo, prefere a variante que não está toda em maiúsculas. O backend
+ * compara a marca sem diferenciar maiúsculas, então qualquer variante filtra certo.
+ */
+function marcasUnicas(catalogos) {
+  const porChave = new Map();
+  for (const { marca } of catalogos) {
+    const nome = marca?.trim().replace(/\s+/g, " ");
+    if (!nome) continue;
+    const chave = nome.toLowerCase();
+    const atual = porChave.get(chave);
+    if (!atual || (atual === atual.toUpperCase() && nome !== nome.toUpperCase())) {
+      porChave.set(chave, nome);
+    }
+  }
+  return [...porChave.values()].sort((a, b) => a.localeCompare(b, "pt-BR", { sensitivity: "base" }));
+}
+
 function descreverCatalogo(catalogo) {
   const identificacao = [catalogo.marca, catalogo.modelo].filter(Boolean).join(" ");
   return identificacao || "Sem marca e modelo";
@@ -112,7 +131,7 @@ function CatalogoPage() {
       const lista = await listarCatalogosValidados(filtros);
       setCatalogos(lista);
       if (!filtros) {
-        setMarcasDisponiveis([...new Set(lista.map((c) => c.marca).filter(Boolean))].sort());
+        setMarcasDisponiveis(marcasUnicas(lista));
       }
     } catch (erro) {
       setMensagemErro(extrairErroApi(erro).mensagem);
